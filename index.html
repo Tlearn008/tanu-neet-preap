@@ -162,11 +162,11 @@
     <script type="module">
         // --- Firebase SDK Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase State ---
-        let db, auth, userId;
+        let db, auth, userId, appId;
         let unsubscribeMockTests, unsubscribeSearchHistory;
 
         // --- Global State ---
@@ -203,7 +203,7 @@
         const userInfoEl = document.getElementById('user-info');
 
         // --- API Keys ---
-        const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do";
+        const geminiApiKey = ""; // This can be left empty if you are using a proxy or environment variable injection
 
         const greetings = [
             "Why did the neuron break up with the axon? It felt there was no connection! Let's make some connections in biology today!",
@@ -262,20 +262,25 @@
 
         async function initFirebase() {
             try {
-                // These variables are provided by the environment.
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", ...{}};
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                // User's actual Firebase config
+                const firebaseConfig = {
+                  apiKey: "AIzaSyCjtncOkpemPxuaEoQ6mRD_Sc99YQ-G7ig",
+                  authDomain: "tanu-neet-dashboard.firebaseapp.com",
+                  projectId: "tanu-neet-dashboard",
+                  storageBucket: "tanu-neet-dashboard.firebasestorage.app",
+                  messagingSenderId: "911874194562",
+                  appId: "1:911874194562:web:fb8b2fbb2d737d52e3c89b",
+                  measurementId: "G-CYNCVKV6Y2"
+                };
+
+                appId = 'tanu-neet-dashboard'; // This is now a simple string for the collection path
 
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Sign in the user
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // On a public site, we will always sign in anonymously
+                await signInAnonymously(auth);
 
                 userId = auth.currentUser?.uid;
                 if (!userId) {
@@ -289,7 +294,11 @@
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
-                mainDashboard.innerHTML = `<p class="text-red-500 text-center p-8">Could not connect to the database. Please refresh and try again.</p>`;
+                let userErrorMessage = "Could not connect to the database. Please refresh and try again.";
+                if (error.code === 'auth/configuration-not-found') {
+                    userErrorMessage = "Database connection failed. <strong>Action Required:</strong> Please go to your Firebase project console, navigate to 'Authentication' > 'Sign-in method', and ensure the 'Anonymous' provider is enabled.";
+                }
+                mainDashboard.innerHTML = `<p class="text-red-500 text-center p-8">${userErrorMessage}</p>`;
             }
         }
 
@@ -300,7 +309,7 @@
             
             // Save search query to Firestore
             try {
-                const searchHistoryCol = collection(db, `artifacts/${__app_id}/users/${userId}/searchHistory`);
+                const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
                 await addDoc(searchHistoryCol, {
                     query: query,
                     timestamp: Date.now()
@@ -333,9 +342,9 @@
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             };
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
             try {
-                const result = await fetchApiResponse(url, payload);
+                const result = await fetchApiResponse(apiUrl, payload);
                 const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 const data = JSON.parse(jsonText);
                 renderStructuredResponse(geminiResponseEl, data);
@@ -548,7 +557,7 @@
             
             // Save test result to Firestore
             try {
-                const mockTestCol = collection(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`);
+                const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
                 await addDoc(mockTestCol, testResult);
             } catch(error) {
                 console.error("Error saving mock test result:", error);
@@ -659,7 +668,7 @@
                 const explanations = JSON.parse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
                 
                 // Save explanations to the specific test document in Firestore
-                const testDocRef = doc(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`, result.id);
+                const testDocRef = doc(db, `artifacts/${appId}/users/${userId}/mockTestHistory`, result.id);
                 await setDoc(testDocRef, { explanations: JSON.stringify(explanations) }, { merge: true });
 
                 let explanationsHtml = '<h3 class="text-2xl font-bold mt-8 mb-4">Explanations</h3>';
@@ -682,7 +691,7 @@
             if (!userId) return;
 
             // Listener for Mock Test History
-            const mockTestCol = collection(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`);
+            const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
             const qMockTests = query(mockTestCol);
             unsubscribeMockTests = onSnapshot(qMockTests, (snapshot) => {
                 mockTestHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -693,7 +702,7 @@
             });
 
             // Listener for Search History
-            const searchHistoryCol = collection(db, `artifacts/${__app_id}/users/${userId}/searchHistory`);
+            const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
             const qSearch = query(searchHistoryCol);
             unsubscribeSearchHistory = onSnapshot(qSearch, (snapshot) => {
                 searchHistoryList.innerHTML = '';
