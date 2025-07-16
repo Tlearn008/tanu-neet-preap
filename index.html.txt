@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TLEARN - NEET Preparation Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tlearn-bg {
+            background-color: #141414;
+        }
+        .tlearn-red {
+            background-color: #E50914;
+        }
+        .tlearn-red-text {
+            color: #E50914;
+        }
+        .search-bar-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #lock-screen {
+            background: url('https://placehold.co/1920x1080/000000/FFFFFF?text=TLEARN') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background-color: #1f1f1f;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 900px;
+            border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .correct-answer {
+            background-color: rgba(4, 120, 87, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .incorrect-answer {
+            background-color: rgba(224, 62, 62, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body class="tlearn-bg text-white">
+
+    <!-- Lock Screen -->
+    <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div class="bg-black bg-opacity-75 p-8 rounded-lg text-center w-full max-w-sm">
+            <h1 class="text-3xl font-bold mb-4">Tanu's NEET Prep</h1>
+            <p class="text-gray-400 mb-6">Enter Passcode</p>
+            <input type="password" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center tracking-widest text-2xl" maxlength="8">
+            <p id="error-message" class="text-red-500 mt-4 hidden">Incorrect Passcode</p>
+        </div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="fixed inset-0 z-40 flex items-center justify-center bg-black hidden">
+        <div class="text-center p-4">
+            <h1 id="welcome-greet" class="text-4xl md:text-6xl font-bold animate-pulse"></h1>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="main-dashboard" class="hidden">
+        <header class="p-4 flex justify-between items-center flex-wrap">
+             <h1 class="text-3xl font-bold tlearn-red-text"><span class="text-4xl">T</span>LEARN</h1>
+             <div id="user-info" class="text-xs text-gray-500"></div>
+            <div class="flex items-center space-x-2 md:space-x-4 mt-2 md:mt-0">
+                <button id="mock-test-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">Full Mock Test</button>
+                <button id="subject-test-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">Subject Test</button>
+                <button id="history-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">History</button>
+            </div>
+        </header>
+
+        <main class="p-4 md:p-8">
+            <!-- Search Section -->
+            <div class="search-bar-container p-6 md:p-10 rounded-lg text-center mb-8">
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">What concept are you exploring today?</h2>
+                <div class="flex flex-col md:flex-row justify-center items-center max-w-4xl mx-auto">
+                    <input type="text" id="search-input" class="w-full md:w-3/4 bg-gray-800 text-white p-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., 'Derive the formula for kinetic energy'">
+                    <button id="search-btn" class="w-full md:w-auto mt-4 md:mt-0 md:ml-4 tlearn-red hover:bg-red-700 text-white font-bold py-4 px-8 rounded-md text-lg">Search</button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="hidden">
+                <div id="gemini-response" class="p-4 bg-gray-800 rounded-md"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Test Modal -->
+    <div id="mock-test-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-mock-test" class="close">&times;</span>
+            <div id="mock-test-content"></div>
+        </div>
+    </div>
+
+    <!-- Subject Wise Test Modal -->
+    <div id="subject-test-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span id="close-subject-test" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-center">Choose a Subject</h2>
+            <div id="subject-choice-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button class="subject-choice-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Physics">Physics</button>
+                <button class="subject-choice-btn bg-green-600 hover:bg-green-700 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Chemistry">Chemistry</button>
+                <button class="subject-choice-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Botany">Botany</button>
+                <button class="subject-choice-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Zoology">Zoology</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Modal -->
+    <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-history" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">History</h2>
+            <div id="history-content">
+                <h3 class="text-xl font-semibold mb-2">Search History</h3>
+                <ul id="search-history-list" class="list-disc list-inside text-gray-300"></ul>
+                <h3 class="text-xl font-semibold mt-6 mb-2">Mock Test Tracker</h3>
+                <div id="mock-test-tracker"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- Firebase SDK Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase State ---
+        let db, auth, userId;
+        let unsubscribeMockTests, unsubscribeSearchHistory;
+
+        // --- Global State ---
+        let currentTestQuestions = [];
+        let mockTestHistory = [];
+        let timerInterval = null;
+        let testStartTime = 0;
+        let currentTestType = '';
+
+        // --- DOM Elements ---
+        const passwordInput = document.getElementById('password-input');
+        const lockScreen = document.getElementById('lock-screen');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const mainDashboard = document.getElementById('main-dashboard');
+        const errorMessage = document.getElementById('error-message');
+        const welcomeGreet = document.getElementById('welcome-greet');
+        const searchBtn = document.getElementById('search-btn');
+        const searchInput = document.getElementById('search-input');
+        const resultsSection = document.getElementById('results-section');
+        const geminiResponseEl = document.getElementById('gemini-response');
+        const mockTestBtn = document.getElementById('mock-test-btn');
+        const subjectTestBtn = document.getElementById('subject-test-btn');
+        const historyBtn = document.getElementById('history-btn');
+        const mockTestModal = document.getElementById('mock-test-modal');
+        const subjectTestModal = document.getElementById('subject-test-modal');
+        const historyModal = document.getElementById('history-modal');
+        const closeMockTest = document.getElementById('close-mock-test');
+        const closeSubjectTest = document.getElementById('close-subject-test');
+        const closeHistory = document.getElementById('close-history');
+        const mockTestContent = document.getElementById('mock-test-content');
+        const subjectChoiceContainer = document.getElementById('subject-choice-container');
+        const searchHistoryList = document.getElementById('search-history-list');
+        const mockTestTracker = document.getElementById('mock-test-tracker');
+        const userInfoEl = document.getElementById('user-info');
+
+        // --- API Keys ---
+        const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do";
+
+        const greetings = [
+            "Why did the neuron break up with the axon? It felt there was no connection! Let's make some connections in biology today!",
+            "What do you call a biologist's favorite song? 'Sweet Home Alabama'... because it's full of relatives!",
+            "Why are chemists so good at solving problems? They have all the solutions! Time to find some for NEET.",
+            "If you're not part of the solution, you're part of the precipitate. Let's be the solution today!",
+            "Are you made of copper and tellurium? Because you're Cu-Te! Now let's get serious about studying.",
+            "Welcome, future doctor! Remember, the Krebs cycle is like a great story - it's all about the drama of electrons."
+        ];
+
+        // --- Event Listeners ---
+        passwordInput.addEventListener('input', (e) => {
+            if (e.target.value.length === 8) handleLogin(e.target.value);
+        });
+        searchBtn.addEventListener('click', handleSearch);
+        mockTestBtn.addEventListener('click', () => {
+            resetFullTestModal();
+            mockTestModal.style.display = 'block';
+        });
+        subjectTestBtn.addEventListener('click', () => subjectTestModal.style.display = 'block');
+        subjectChoiceContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('subject-choice-btn')) {
+                const subject = e.target.dataset.subject;
+                subjectTestModal.style.display = 'none';
+                startSubjectTest(subject);
+            }
+        });
+        historyBtn.addEventListener('click', () => historyModal.style.display = 'block');
+        closeMockTest.addEventListener('click', () => mockTestModal.style.display = 'none');
+        closeSubjectTest.addEventListener('click', () => subjectTestModal.style.display = 'none');
+        closeHistory.addEventListener('click', () => historyModal.style.display = 'none');
+        window.addEventListener('click', (event) => {
+            if (event.target == mockTestModal) mockTestModal.style.display = 'none';
+            if (event.target == historyModal) historyModal.style.display = 'none';
+            if (event.target == subjectTestModal) subjectTestModal.style.display = 'none';
+        });
+
+        // --- Functions ---
+        async function handleLogin(password) {
+            if (password === '02102008') {
+                await initFirebase(); // Initialize Firebase on successful login
+                lockScreen.classList.add('hidden');
+                const randomGreet = greetings[Math.floor(Math.random() * greetings.length)];
+                welcomeGreet.textContent = randomGreet;
+                welcomeScreen.classList.remove('hidden');
+                setTimeout(() => {
+                    welcomeScreen.classList.add('hidden');
+                    mainDashboard.classList.remove('hidden');
+                }, 10000); 
+            } else {
+                errorMessage.classList.remove('hidden');
+                passwordInput.value = '';
+                setTimeout(() => errorMessage.classList.add('hidden'), 2000);
+            }
+        }
+
+        async function initFirebase() {
+            try {
+                // These variables are provided by the environment.
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", ...{}};
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Sign in the user
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                userId = auth.currentUser?.uid;
+                if (!userId) {
+                    throw new Error("Authentication failed, user ID is not available.");
+                }
+                
+                userInfoEl.textContent = `UserID: ${userId}`;
+
+                // Setup real-time listeners for history
+                setupHistoryListeners();
+
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                mainDashboard.innerHTML = `<p class="text-red-500 text-center p-8">Could not connect to the database. Please refresh and try again.</p>`;
+            }
+        }
+
+        async function handleSearch() {
+            const query = searchInput.value.trim();
+            if (!query || !userId) return;
+            resultsSection.classList.remove('hidden');
+            
+            // Save search query to Firestore
+            try {
+                const searchHistoryCol = collection(db, `artifacts/${__app_id}/users/${userId}/searchHistory`);
+                await addDoc(searchHistoryCol, {
+                    query: query,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error("Error saving search history:", error);
+            }
+
+            fetchGeminiResponse(query);
+        }
+        
+        async function fetchApiResponse(url, payload) {
+            const headers = { 'Content-Type': 'application/json' };
+            try {
+                const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching from Gemini API:`, error);
+                throw error;
+            }
+        }
+
+        async function fetchGeminiResponse(query) {
+            geminiResponseEl.innerHTML = '<p>Loading structured response from Gemini...</p>';
+            const prompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null. The JSON structure should be: {"shortAnswer": "...", "detailedAnswer": "...", "derivation": "..." or null}.`;
+            const payload = { 
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            try {
+                const result = await fetchApiResponse(url, payload);
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                const data = JSON.parse(jsonText);
+                renderStructuredResponse(geminiResponseEl, data);
+            } catch (error) {
+                geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            }
+        }
+        
+        function renderStructuredResponse(element, data) {
+            if (!data || !data.shortAnswer || !data.detailedAnswer) {
+                element.innerHTML = `<p class="text-yellow-400">The response from the model was not in the expected format. Please try again.</p>`;
+                return;
+            }
+
+            let derivationHtml = '';
+            if (data.derivation) {
+                derivationHtml = `
+                    <div class="derivation-section mt-6">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3>
+                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
+                            ${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            element.innerHTML = `
+                <div class="response-container">
+                    <div class="short-answer-section mb-6">
+                        <h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3>
+                        <div class="bg-gray-700 p-4 rounded-lg text-gray-300">
+                            ${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    <div class="detailed-answer-section">
+                        <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
+                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
+                            ${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    ${derivationHtml}
+                </div>
+            `;
+        }
+
+        function resetFullTestModal() {
+            mockTestContent.innerHTML = `
+                <div id="mock-test-instructions">
+                    <h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2>
+                    <h3 class="text-xl font-semibold mb-2">Instructions</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>This test contains 180 multiple-choice questions.</li>
+                        <li>Each correct answer fetches 4 marks. For each incorrect answer, 1 mark will be deducted.</li>
+                        <li>Test Duration: <strong>3 hours</strong>. The test will auto-submit when the timer ends.</li>
+                    </ul>
+                    <button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button>
+                </div>
+                <div id="mock-test-paper" class="hidden mt-6"></div>`;
+            document.getElementById('start-full-test-btn').addEventListener('click', startFullTest);
+        }
+
+        async function startFullTest(promptOverride = null) {
+            currentTestType = currentTestType || 'Full Mock Test';
+            const paper = mockTestContent.querySelector('#mock-test-paper') || (mockTestContent.innerHTML = '<div id="mock-test-paper"></div>', mockTestContent.querySelector('#mock-test-paper'));
+            const instructions = mockTestContent.querySelector('#mock-test-instructions');
+            if (instructions) instructions.classList.add('hidden');
+            paper.classList.remove('hidden');
+            paper.innerHTML = '<p>Generating unique full test... This will take a moment.</p>';
+
+            const subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+            try {
+                const questionPromises = subjects.map(subject => generateQuestionsForSubject(subject, 45, paper, promptOverride));
+                const questionSets = await Promise.all(questionPromises);
+                currentTestQuestions = questionSets.flat();
+                displayQuestions(currentTestQuestions);
+                startTimer(180);
+            } catch (error) {
+                paper.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`;
+            }
+        }
+
+        async function startSubjectTest(subject) {
+            currentTestType = `Subject Test: ${subject}`;
+            mockTestModal.style.display = 'block';
+            mockTestContent.innerHTML = `<div id="mock-test-paper"><p>Generating unique ${subject} test...</p></div>`;
+            const paper = mockTestContent.querySelector('#mock-test-paper');
+            try {
+                currentTestQuestions = await generateQuestionsForSubject(subject, 45, paper);
+                displayQuestions(currentTestQuestions);
+                startTimer(45);
+            } catch (error) {
+                paper.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`;
+            }
+        }
+
+        async function generateQuestionsForSubject(subject, count, paperElement, testPrompt = null) {
+            paperElement.innerHTML = `<p>Generating ${count} ${subject} questions...</p>`;
+            const prompt = testPrompt 
+                ? `${testPrompt} For the ${subject} section, generate ${count} questions.`
+                : `Generate ${count} unique, high-quality multiple-choice questions for NEET exam preparation on the subject of ${subject}. For each question, provide 4 options (A, B, C, D) and indicate the correct answer letter. Format the output as a valid JSON array of objects, where each object has keys: "question", "options" (an array of 4 strings), "answer" (a string like "A", "B", "C", or "D"), and "subject" (string: "${subject}").`;
+            
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            const result = await fetchApiResponse(url, payload);
+            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            return JSON.parse(jsonText);
+        }
+        
+        function startTimer(durationInMinutes) {
+            clearInterval(timerInterval);
+            testStartTime = Date.now();
+            const endTime = testStartTime + durationInMinutes * 60 * 1000;
+            const timerDisplay = document.getElementById('timer-display');
+            if (timerDisplay) timerDisplay.classList.remove('hidden');
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const distance = endTime - now;
+                const timerDisplay = document.getElementById('timer-display');
+
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    if (timerDisplay) timerDisplay.innerHTML = "Time's Up!";
+                    document.getElementById('submit-test-btn')?.click(); // Auto-submit
+                    return;
+                }
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                if (timerDisplay) timerDisplay.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function displayQuestions(questions) {
+            const paper = mockTestContent.querySelector('#mock-test-paper');
+            let questionsHtml = `
+                <div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">${currentTestType}</h2>
+                    <div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div>
+                </div>`;
+            let currentSubject = '';
+            questions.forEach((q, index) => {
+                if(q.subject !== currentSubject) {
+                    currentSubject = q.subject;
+                    questionsHtml += `<h3 class="text-xl font-bold mt-6 mb-4 text-red-500">${currentSubject}</h3>`;
+                }
+                questionsHtml += `
+                    <div class="mb-6">
+                        <p class="font-semibold">${index + 1}. ${q.question}</p>
+                        <div class="mt-2 space-y-2" id="q-${index}">
+                            ${q.options.map((opt, i) => `
+                                <div>
+                                    <input type="radio" id="q${index}opt${i}" name="q${index}" value="${String.fromCharCode(65 + i)}">
+                                    <label for="q${index}opt${i}" class="ml-2">${String.fromCharCode(65 + i)}) ${opt}</label>
+                                </div>`).join('')}
+                        </div>
+                    </div>`;
+            });
+            questionsHtml += `<button id="submit-test-btn" class="mt-8 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Submit Test</button>`;
+            paper.innerHTML = questionsHtml;
+
+            document.getElementById('submit-test-btn').addEventListener('click', handleSubmitTest);
+        }
+
+        async function handleSubmitTest() {
+            clearInterval(timerInterval);
+            const timeTakenMs = Date.now() - testStartTime;
+            const totalSeconds = Math.floor(timeTakenMs / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const timeTakenFormatted = `${minutes}m ${seconds}s`;
+
+            let score = 0;
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let unattemptedCount = 0;
+            const userAnswers = [];
+
+            currentTestQuestions.forEach((q, index) => {
+                const selected = document.querySelector(`#mock-test-content input[name="q${index}"]:checked`);
+                const answer = selected ? selected.value : null;
+                userAnswers.push(answer);
+                if (answer) {
+                    if (answer === q.answer) {
+                        score += 4;
+                        correctCount++;
+                    } else {
+                        score -= 1;
+                        incorrectCount++;
+                    }
+                } else {
+                    unattemptedCount++;
+                }
+            });
+
+            const testResult = {
+                timestamp: Date.now(),
+                type: currentTestType,
+                timeTaken: timeTakenFormatted,
+                score, correctCount, incorrectCount, unattemptedCount,
+                // To avoid large documents, we stringify the questions and answers.
+                questions: JSON.stringify(currentTestQuestions), 
+                userAnswers: JSON.stringify(userAnswers)
+            };
+            
+            // Save test result to Firestore
+            try {
+                const mockTestCol = collection(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`);
+                await addDoc(mockTestCol, testResult);
+            } catch(error) {
+                console.error("Error saving mock test result:", error);
+            }
+
+            // We pass the original (non-stringified) data to display results immediately.
+            displayResults({ 
+                ...testResult, 
+                questions: currentTestQuestions, 
+                userAnswers: JSON.parse(testResult.userAnswers) 
+            });
+        }
+
+        function displayResults(result) {
+            // Ensure questions and answers are in object format, not string
+            const questions = typeof result.questions === 'string' ? JSON.parse(result.questions) : result.questions;
+            const userAnswers = typeof result.userAnswers === 'string' ? JSON.parse(result.userAnswers) : result.userAnswers;
+
+            let resultsHtml = `
+                <div id="results-summary">
+                    <h2 class="text-3xl font-bold mb-4">${result.type} - Results</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
+                        <div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Total Score</p></div>
+                        <div class="bg-green-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.correctCount}</p><p>Correct</p></div>
+                        <div class="bg-red-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.incorrectCount}</p><p>Incorrect</p></div>
+                        <div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div>
+                    </div>
+                    <p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>
+                    <h3 class="text-2xl font-bold mb-4">Review Answers</h3>
+                     <button id="explain-all-btn" class="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All Questions</button>
+                     <div id="explanations-container"></div>
+                </div>`;
+            
+            let currentSubject = '';
+            questions.forEach((q, index) => {
+                if(q.subject !== currentSubject) {
+                    currentSubject = q.subject;
+                    resultsHtml += `<h3 class="text-xl font-bold mt-6 mb-4 text-red-500">${currentSubject}</h3>`;
+                }
+                const userAnswer = userAnswers[index];
+                let optionsHtml = '';
+                q.options.forEach((opt, i) => {
+                    const optionLetter = String.fromCharCode(65 + i);
+                    let labelClass = '';
+                    if (optionLetter === q.answer) {
+                        labelClass = 'correct-answer';
+                    } else if (optionLetter === userAnswer) {
+                        labelClass = 'incorrect-answer';
+                    }
+                    optionsHtml += `<div><label class="ml-2 ${labelClass}">${optionLetter}) ${opt}</label></div>`;
+                });
+
+                let mistakeButtonHtml = '';
+                if (userAnswer && userAnswer !== q.answer) {
+                    mistakeButtonHtml = `<button class="explain-mistake-btn mt-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded-md text-sm" data-question-index="${index}">✨ Explain My Mistake</button>`;
+                }
+
+                resultsHtml += `
+                    <div class="mb-6 p-4 bg-gray-800 rounded-lg">
+                        <p class="font-semibold">${index + 1}. ${q.question}</p>
+                        <div class="mt-2 space-y-2">${optionsHtml}</div>
+                        <p class="mt-2 text-sm">Your Answer: ${userAnswer || 'Not Answered'}</p>
+                        ${mistakeButtonHtml}
+                        <div id="mistake-explanation-${index}" class="mt-2 text-sm text-yellow-200"></div>
+                    </div>`;
+            });
+            
+            mockTestContent.innerHTML = resultsHtml;
+            document.getElementById('explain-all-btn').addEventListener('click', () => generateAllExplanations({ ...result, questions, userAnswers }));
+            document.querySelectorAll('.explain-mistake-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const questionIndex = e.target.dataset.questionIndex;
+                    const question = questions[questionIndex];
+                    const userAnswer = userAnswers[questionIndex];
+                    getMistakeExplanation(question, userAnswer, `mistake-explanation-${questionIndex}`);
+                });
+            });
+        }
+        
+        async function getMistakeExplanation(question, userAnswer, elementId) {
+            const explanationEl = document.getElementById(elementId);
+            explanationEl.innerHTML = 'Loading explanation...';
+            const prompt = `I am a NEET aspirant. For the following multiple-choice question, I chose answer '${userAnswer}' but the correct answer is '${question.answer}'. Please explain why my answer is incorrect and clarify the concept. Question: ${question.question}. Options: ${question.options.join(', ')}.`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            try {
+                const result = await fetchApiResponse(url, payload);
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                explanationEl.innerHTML = text ? text.replace(/\*/g, '').replace(/\n/g, '<br>') : '<p>Could not load explanation.</p>';
+            } catch (error) {
+                explanationEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function generateAllExplanations(result) {
+            const container = document.getElementById('explanations-container');
+            container.innerHTML = `<p class="text-center">Generating explanations... This may take some time.</p>`;
+            
+            const prompt = `Provide a detailed, step-by-step explanation for each of the following NEET questions. Here is the JSON data of the questions and their correct answers: ${JSON.stringify(result.questions)}. Return a valid JSON array of strings, where each string is the explanation for the corresponding question in the input array.`;
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+
+            try {
+                const apiResult = await fetchApiResponse(url, payload);
+                const explanations = JSON.parse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
+                
+                // Save explanations to the specific test document in Firestore
+                const testDocRef = doc(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`, result.id);
+                await setDoc(testDocRef, { explanations: JSON.stringify(explanations) }, { merge: true });
+
+                let explanationsHtml = '<h3 class="text-2xl font-bold mt-8 mb-4">Explanations</h3>';
+                result.questions.forEach((q, index) => {
+                    explanationsHtml += `
+                        <div class="mb-4 p-4 bg-gray-900 rounded-lg">
+                            <p class="font-semibold">${index + 1}. ${q.question}</p>
+                            <p class="mt-2 text-green-400">Correct Answer: ${q.answer}</p>
+                            <div class="mt-2 text-gray-300">${explanations[index].replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                        </div>`;
+                });
+                container.innerHTML = explanationsHtml;
+
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
+            }
+        }
+
+        function setupHistoryListeners() {
+            if (!userId) return;
+
+            // Listener for Mock Test History
+            const mockTestCol = collection(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`);
+            const qMockTests = query(mockTestCol);
+            unsubscribeMockTests = onSnapshot(qMockTests, (snapshot) => {
+                mockTestHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderHistory();
+            }, (error) => {
+                console.error("Error listening to mock test history:", error);
+                mockTestTracker.innerHTML = '<p class="text-red-400">Could not load test history.</p>';
+            });
+
+            // Listener for Search History
+            const searchHistoryCol = collection(db, `artifacts/${__app_id}/users/${userId}/searchHistory`);
+            const qSearch = query(searchHistoryCol);
+            unsubscribeSearchHistory = onSnapshot(qSearch, (snapshot) => {
+                searchHistoryList.innerHTML = '';
+                const searches = snapshot.docs.map(doc => doc.data());
+                searches.sort((a,b) => b.timestamp - a.timestamp); // Sort by newest first
+                searches.forEach(search => {
+                    const li = document.createElement('li');
+                    li.textContent = search.query;
+                    searchHistoryList.appendChild(li);
+                });
+            }, (error) => {
+                console.error("Error listening to search history:", error);
+                searchHistoryList.innerHTML = '<li>Could not load search history.</li>';
+            });
+        }
+
+
+        function renderHistory() {
+            mockTestTracker.innerHTML = '';
+            if (!mockTestHistory || mockTestHistory.length === 0) {
+                 mockTestTracker.innerHTML = '<p class="text-gray-400">No mock tests taken yet.</p>';
+                 return;
+            }
+
+            // Group tests by date
+            const groupedByDate = mockTestHistory.reduce((acc, result) => {
+                const date = new Date(result.timestamp).toLocaleDateString('en-CA'); // YYYY-MM-DD format for sorting
+                if (!acc[date]) {
+                    acc[date] = [];
+                }
+                acc[date].push(result);
+                return acc;
+            }, {});
+
+            // Get sorted dates (newest first)
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+            // Render grouped history
+            sortedDates.forEach(dateStr => {
+                const dateHeading = document.createElement('h3');
+                dateHeading.className = 'text-lg font-semibold mt-4 mb-2 text-gray-400';
+                
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                const recordDate = new Date(dateStr);
+
+                if (recordDate.toDateString() === today.toDateString()) {
+                    dateHeading.textContent = 'Today';
+                } else if (recordDate.toDateString() === yesterday.toDateString()) {
+                    dateHeading.textContent = 'Yesterday';
+                } else {
+                    dateHeading.textContent = recordDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                }
+
+                mockTestTracker.appendChild(dateHeading);
+
+                const testsForDate = groupedByDate[dateStr];
+                testsForDate.sort((a, b) => b.timestamp - a.timestamp); // Sort tests within the day, newest first
+
+                testsForDate.forEach(result => {
+                    const record = document.createElement('div');
+                    record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
+                    const testTime = new Date(result.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                    record.innerHTML = `
+                        <div>
+                            <p class="font-bold">${result.type} at ${testTime}</p>
+                            <p>Score: ${result.score}</p>
+                            <p>Time Taken: ${result.timeTaken || 'N/A'}</p>
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">View Results</button>
+                    `;
+                    record.querySelector('button').addEventListener('click', () => {
+                        historyModal.style.display = 'none';
+                        mockTestModal.style.display = 'block';
+                        displayResults(result);
+                    });
+                    mockTestTracker.appendChild(record);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
