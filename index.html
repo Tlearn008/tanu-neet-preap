@@ -99,6 +99,7 @@
              <h1 class="text-3xl font-bold tlearn-red-text"><span class="text-4xl">T</span>LEARN</h1>
              <div id="user-info" class="text-xs text-gray-500"></div>
             <div class="flex items-center space-x-2 md:space-x-4 mt-2 md:mt-0">
+                <button id="study-plan-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">✨ Create Study Plan</button>
                 <button id="mock-test-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">Full Mock Test</button>
                 <button id="subject-test-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">Subject Test</button>
                 <button id="history-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">History</button>
@@ -122,7 +123,26 @@
         </main>
     </div>
 
-    <!-- Test Modal -->
+    <!-- Modals -->
+    <div id="study-plan-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-study-plan" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-center">✨ AI Study Plan Generator</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="study-weeks" class="block text-sm font-medium text-gray-300">Number of Weeks to Study:</label>
+                    <input type="number" id="study-weeks" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1" value="8">
+                </div>
+                <div>
+                    <label for="study-subjects" class="block text-sm font-medium text-gray-300">Subjects to Focus On (comma-separated):</label>
+                    <input type="text" id="study-subjects" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1" placeholder="e.g., Physics, Organic Chemistry">
+                </div>
+                <button id="generate-plan-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-md">Generate Plan</button>
+            </div>
+            <div id="study-plan-output" class="mt-6 p-4 bg-gray-900 rounded-lg min-h-[200px] text-gray-300 whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
     <div id="mock-test-modal" class="modal">
         <div class="modal-content">
             <span id="close-mock-test" class="close">&times;</span>
@@ -130,7 +150,6 @@
         </div>
     </div>
 
-    <!-- Subject Wise Test Modal -->
     <div id="subject-test-modal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <span id="close-subject-test" class="close">&times;</span>
@@ -144,7 +163,6 @@
         </div>
     </div>
     
-    <!-- History Modal -->
     <div id="history-modal" class="modal">
         <div class="modal-content">
             <span id="close-history" class="close">&times;</span>
@@ -162,11 +180,11 @@
     <script type="module">
         // --- Firebase SDK Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase State ---
-        let db, auth, userId;
+        let db, auth, userId, appId;
         let unsubscribeMockTests, unsubscribeSearchHistory;
 
         // --- Global State ---
@@ -190,20 +208,25 @@
         const mockTestBtn = document.getElementById('mock-test-btn');
         const subjectTestBtn = document.getElementById('subject-test-btn');
         const historyBtn = document.getElementById('history-btn');
+        const studyPlanBtn = document.getElementById('study-plan-btn');
         const mockTestModal = document.getElementById('mock-test-modal');
         const subjectTestModal = document.getElementById('subject-test-modal');
         const historyModal = document.getElementById('history-modal');
+        const studyPlanModal = document.getElementById('study-plan-modal');
         const closeMockTest = document.getElementById('close-mock-test');
         const closeSubjectTest = document.getElementById('close-subject-test');
         const closeHistory = document.getElementById('close-history');
+        const closeStudyPlan = document.getElementById('close-study-plan');
         const mockTestContent = document.getElementById('mock-test-content');
         const subjectChoiceContainer = document.getElementById('subject-choice-container');
         const searchHistoryList = document.getElementById('search-history-list');
         const mockTestTracker = document.getElementById('mock-test-tracker');
         const userInfoEl = document.getElementById('user-info');
+        const generatePlanBtn = document.getElementById('generate-plan-btn');
+        const studyPlanOutput = document.getElementById('study-plan-output');
 
         // --- API Keys ---
-        const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do";
+        const geminiApiKey = "AIzaSyBXO4xb-8_uEcWQU_VzkGFt9GPFYx69NO0";
 
         const greetings = [
             "Why did the neuron break up with the axon? It felt there was no connection! Let's make some connections in biology today!",
@@ -232,13 +255,17 @@
             }
         });
         historyBtn.addEventListener('click', () => historyModal.style.display = 'block');
+        studyPlanBtn.addEventListener('click', () => studyPlanModal.style.display = 'block');
+        generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
         closeMockTest.addEventListener('click', () => mockTestModal.style.display = 'none');
         closeSubjectTest.addEventListener('click', () => subjectTestModal.style.display = 'none');
         closeHistory.addEventListener('click', () => historyModal.style.display = 'none');
+        closeStudyPlan.addEventListener('click', () => studyPlanModal.style.display = 'none');
         window.addEventListener('click', (event) => {
             if (event.target == mockTestModal) mockTestModal.style.display = 'none';
             if (event.target == historyModal) historyModal.style.display = 'none';
             if (event.target == subjectTestModal) subjectTestModal.style.display = 'none';
+            if (event.target == studyPlanModal) studyPlanModal.style.display = 'none';
         });
 
         // --- Functions ---
@@ -262,20 +289,24 @@
 
         async function initFirebase() {
             try {
-                // These variables are provided by the environment.
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", ...{}};
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                // User's actual and complete Firebase config
+                const firebaseConfig = {
+                  apiKey: "AIzaSyCjtncOkpemPxuaEoQ6mRD_Sc99YQ-G7ig",
+                  authDomain: "tanu-neet-dashboard.firebaseapp.com",
+                  projectId: "tanu-neet-dashboard",
+                  storageBucket: "tanu-neet-dashboard.firebasestorage.app",
+                  messagingSenderId: "911874194562",
+                  appId: "1:911874194562:web:fb8b2fbb2d737d52e3c89b",
+                  measurementId: "G-CYNCVKV6Y2"
+                };
+
+                appId = firebaseConfig.projectId;
 
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Sign in the user
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
 
                 userId = auth.currentUser?.uid;
                 if (!userId) {
@@ -284,12 +315,19 @@
                 
                 userInfoEl.textContent = `UserID: ${userId}`;
 
-                // Setup real-time listeners for history
                 setupHistoryListeners();
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
-                mainDashboard.innerHTML = `<p class="text-red-500 text-center p-8">Could not connect to the database. Please refresh and try again.</p>`;
+                let userErrorMessage = "Could not connect to the database. Please check your Firebase configuration and refresh.";
+                
+                if (error.code === 'auth/configuration-not-found') {
+                    userErrorMessage = "Database connection failed. <strong>Action Required:</strong> Please go to your Firebase project console, navigate to 'Authentication' > 'Sign-in method', and ensure the 'Anonymous' provider is enabled.";
+                } else if (error.message && error.message.includes('identity-toolkit-api-has-not-been-used')) {
+                     userErrorMessage = `Database connection failed because a required service is disabled. <strong>Action Required:</strong> Please click this link to enable the Identity Toolkit API for your project: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" class="text-blue-400 underline">Enable API</a>. After enabling, wait a minute and refresh this page.`;
+                }
+
+                mainDashboard.innerHTML = `<p class="text-red-500 text-center p-8">${userErrorMessage}</p>`;
             }
         }
 
@@ -298,9 +336,8 @@
             if (!query || !userId) return;
             resultsSection.classList.remove('hidden');
             
-            // Save search query to Firestore
             try {
-                const searchHistoryCol = collection(db, `artifacts/${__app_id}/users/${userId}/searchHistory`);
+                const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
                 await addDoc(searchHistoryCol, {
                     query: query,
                     timestamp: Date.now()
@@ -333,18 +370,18 @@
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             };
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
             try {
-                const result = await fetchApiResponse(url, payload);
+                const result = await fetchApiResponse(apiUrl, payload);
                 const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 const data = JSON.parse(jsonText);
-                renderStructuredResponse(geminiResponseEl, data);
+                renderStructuredResponse(geminiResponseEl, data, query);
             } catch (error) {
                 geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
             }
         }
         
-        function renderStructuredResponse(element, data) {
+        function renderStructuredResponse(element, data, query) {
             if (!data || !data.shortAnswer || !data.detailedAnswer) {
                 element.innerHTML = `<p class="text-yellow-400">The response from the model was not in the expected format. Please try again.</p>`;
                 return;
@@ -364,13 +401,16 @@
 
             element.innerHTML = `
                 <div class="response-container">
-                    <div class="short-answer-section mb-6">
-                        <h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3>
-                        <div class="bg-gray-700 p-4 rounded-lg text-gray-300">
-                            ${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
-                        </div>
+                    <div class="flex justify-between items-center mb-6">
+                         <h3 class="text-xl font-bold text-blue-400">Quick Summary</h3>
+                         <button id="mnemonic-btn" data-concept="${query}" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md text-sm">✨ Generate Mnemonic</button>
                     </div>
-                    <div class="detailed-answer-section">
+                    <div class="bg-gray-700 p-4 rounded-lg text-gray-300">
+                        ${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
+                    </div>
+                    <div id="mnemonic-output" class="mt-4 p-4 bg-purple-900 bg-opacity-50 rounded-lg text-gray-300 hidden"></div>
+
+                    <div class="detailed-answer-section mt-6">
                         <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
                         <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
                             ${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
@@ -379,6 +419,45 @@
                     ${derivationHtml}
                 </div>
             `;
+            
+            document.getElementById('mnemonic-btn').addEventListener('click', handleGenerateMnemonic);
+        }
+
+        async function handleGenerateMnemonic(event) {
+            const concept = event.target.dataset.concept;
+            const outputEl = document.getElementById('mnemonic-output');
+            outputEl.classList.remove('hidden');
+            outputEl.innerHTML = 'Generating mnemonic...';
+
+            const prompt = `Create a simple and memorable mnemonic for the following NEET concept: "${concept}". The mnemonic should be easy to remember for a student.`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+
+            try {
+                const result = await fetchApiResponse(apiUrl, payload);
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                outputEl.innerHTML = text.replace(/\*/g, '');
+            } catch (error) {
+                outputEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function handleGenerateStudyPlan() {
+            const weeks = document.getElementById('study-weeks').value;
+            const subjects = document.getElementById('study-subjects').value;
+            studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
+
+            const prompt = `You are an expert academic planner for the NEET medical entrance exam. Create a detailed, day-by-day study plan for a student for ${weeks} weeks. The student wants to focus primarily on the following subjects: ${subjects || 'all subjects (Physics, Chemistry, Botany, Zoology)'}. The plan should be realistic, including specific topics for each day, scheduled revision days, and mock test days. Format the output clearly with headings for each week and day.`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+
+            try {
+                const result = await fetchApiResponse(apiUrl, payload);
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                studyPlanOutput.innerHTML = text.replace(/\*/g, '');
+            } catch (error) {
+                studyPlanOutput.innerHTML = `<p class="text-red-400">Error generating plan: ${error.message}</p>`;
+            }
         }
 
         function resetFullTestModal() {
@@ -541,20 +620,17 @@
                 type: currentTestType,
                 timeTaken: timeTakenFormatted,
                 score, correctCount, incorrectCount, unattemptedCount,
-                // To avoid large documents, we stringify the questions and answers.
                 questions: JSON.stringify(currentTestQuestions), 
                 userAnswers: JSON.stringify(userAnswers)
             };
             
-            // Save test result to Firestore
             try {
-                const mockTestCol = collection(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`);
+                const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
                 await addDoc(mockTestCol, testResult);
             } catch(error) {
                 console.error("Error saving mock test result:", error);
             }
 
-            // We pass the original (non-stringified) data to display results immediately.
             displayResults({ 
                 ...testResult, 
                 questions: currentTestQuestions, 
@@ -563,7 +639,6 @@
         }
 
         function displayResults(result) {
-            // Ensure questions and answers are in object format, not string
             const questions = typeof result.questions === 'string' ? JSON.parse(result.questions) : result.questions;
             const userAnswers = typeof result.userAnswers === 'string' ? JSON.parse(result.userAnswers) : result.userAnswers;
 
@@ -658,8 +733,7 @@
                 const apiResult = await fetchApiResponse(url, payload);
                 const explanations = JSON.parse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
                 
-                // Save explanations to the specific test document in Firestore
-                const testDocRef = doc(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`, result.id);
+                const testDocRef = doc(db, `artifacts/${appId}/users/${userId}/mockTestHistory`, result.id);
                 await setDoc(testDocRef, { explanations: JSON.stringify(explanations) }, { merge: true });
 
                 let explanationsHtml = '<h3 class="text-2xl font-bold mt-8 mb-4">Explanations</h3>';
@@ -681,8 +755,7 @@
         function setupHistoryListeners() {
             if (!userId) return;
 
-            // Listener for Mock Test History
-            const mockTestCol = collection(db, `artifacts/${__app_id}/users/${userId}/mockTestHistory`);
+            const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
             const qMockTests = query(mockTestCol);
             unsubscribeMockTests = onSnapshot(qMockTests, (snapshot) => {
                 mockTestHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -692,13 +765,12 @@
                 mockTestTracker.innerHTML = '<p class="text-red-400">Could not load test history.</p>';
             });
 
-            // Listener for Search History
-            const searchHistoryCol = collection(db, `artifacts/${__app_id}/users/${userId}/searchHistory`);
+            const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
             const qSearch = query(searchHistoryCol);
             unsubscribeSearchHistory = onSnapshot(qSearch, (snapshot) => {
                 searchHistoryList.innerHTML = '';
                 const searches = snapshot.docs.map(doc => doc.data());
-                searches.sort((a,b) => b.timestamp - a.timestamp); // Sort by newest first
+                searches.sort((a,b) => b.timestamp - a.timestamp); 
                 searches.forEach(search => {
                     const li = document.createElement('li');
                     li.textContent = search.query;
@@ -718,9 +790,8 @@
                  return;
             }
 
-            // Group tests by date
             const groupedByDate = mockTestHistory.reduce((acc, result) => {
-                const date = new Date(result.timestamp).toLocaleDateString('en-CA'); // YYYY-MM-DD format for sorting
+                const date = new Date(result.timestamp).toLocaleDateString('en-CA'); 
                 if (!acc[date]) {
                     acc[date] = [];
                 }
@@ -728,10 +799,8 @@
                 return acc;
             }, {});
 
-            // Get sorted dates (newest first)
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
-            // Render grouped history
             sortedDates.forEach(dateStr => {
                 const dateHeading = document.createElement('h3');
                 dateHeading.className = 'text-lg font-semibold mt-4 mb-2 text-gray-400';
@@ -753,7 +822,7 @@
                 mockTestTracker.appendChild(dateHeading);
 
                 const testsForDate = groupedByDate[dateStr];
-                testsForDate.sort((a, b) => b.timestamp - a.timestamp); // Sort tests within the day, newest first
+                testsForDate.sort((a, b) => b.timestamp - a.timestamp);
 
                 testsForDate.forEach(result => {
                     const record = document.createElement('div');
