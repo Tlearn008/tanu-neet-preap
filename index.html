@@ -23,10 +23,97 @@
             background-color: rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        
+        /* --- Upgraded Lock Screen Styles --- */
         #lock-screen {
-            background: url('https://placehold.co/1920x1080/000000/FFFFFF?text=TLEARN') no-repeat center center fixed;
-            background-size: cover;
+            background-color: #000;
+            overflow: hidden; /* Hide overflowing aurora elements */
+            transition: opacity 0.5s ease-in-out;
         }
+
+        .aurora-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            filter: blur(100px) saturate(150%);
+        }
+
+        .aurora-element {
+            position: absolute;
+            border-radius: 50%;
+            animation: move 20s infinite alternate;
+        }
+
+        .aurora-element:nth-child(1) {
+            width: 50vw;
+            height: 50vw;
+            max-width: 500px;
+            max-height: 500px;
+            background: radial-gradient(circle, rgba(229,9,20,0.5) 0%, rgba(229,9,20,0) 70%);
+            top: -20%;
+            left: -10%;
+            animation-duration: 18s;
+        }
+
+        .aurora-element:nth-child(2) {
+            width: 60vw;
+            height: 60vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: radial-gradient(circle, rgba(48,43,99,0.5) 0%, rgba(48,43,99,0) 70%);
+            bottom: -30%;
+            right: -20%;
+            animation-duration: 25s;
+        }
+        
+        .aurora-element:nth-child(3) {
+            width: 40vw;
+            height: 40vw;
+            max-width: 400px;
+            max-height: 400px;
+            background: radial-gradient(circle, rgba(0, 255, 159, 0.3) 0%, rgba(36,36,62,0) 70%);
+            top: 10%;
+            right: 10%;
+            animation-duration: 22s;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            to {
+                transform: translate(100px, 50px) rotate(45deg);
+            }
+        }
+        
+        .glassmorphism-box {
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        #password-input:focus {
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.7);
+            border-color: #E50914;
+        }
+
+        /* NEW: Welcome screen animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-down { animation: fadeInDown 1.5s ease-out forwards; }
+        .fade-in-up { animation: fadeInUp 1.5s ease-out 0.5s forwards; opacity: 0; }
+        
         .modal {
             display: none;
             position: fixed;
@@ -73,16 +160,25 @@
             border-radius: 4px;
             text-decoration: line-through;
         }
+        select {
+            background-color: #2d3748;
+            color: white;
+        }
     </style>
 </head>
 <body class="tlearn-bg text-white">
 
     <!-- Lock Screen -->
-    <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-black">
-        <div class="bg-black bg-opacity-75 p-8 rounded-lg text-center w-full max-w-sm">
-            <h1 class="text-3xl font-bold mb-4">Tanu's NEET Prep</h1>
+    <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="aurora-container">
+            <div class="aurora-element"></div>
+            <div class="aurora-element"></div>
+            <div class="aurora-element"></div>
+        </div>
+        <div class="glassmorphism-box p-8 rounded-xl shadow-2xl text-center w-full max-w-sm">
+            <h1 class="text-3xl font-bold mb-4">Thanu's Prep Dashboard</h1>
             <p class="text-gray-400 mb-6">Enter Passcode</p>
-            <input type="password" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center tracking-widest text-2xl" maxlength="8">
+            <input type="password" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center tracking-widest text-2xl border-2 border-transparent transition-all duration-300" maxlength="8">
             <p id="error-message" class="text-red-500 mt-4 hidden">Incorrect Passcode</p>
         </div>
     </div>
@@ -90,20 +186,23 @@
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="fixed inset-0 z-40 flex items-center justify-center bg-black hidden">
         <div class="text-center p-4">
-            <h1 id="welcome-greet" class="text-4xl md:text-6xl font-bold animate-pulse"></h1>
+            <h1 id="welcome-greet" class="text-4xl md:text-6xl font-bold"></h1>
+            <p id="welcome-subtext" class="text-xl md:text-2xl text-gray-400 mt-4"></p>
         </div>
     </div>
 
     <!-- Main Dashboard -->
     <div id="main-dashboard" class="hidden">
-        <header class="p-4 flex justify-between items-center flex-wrap">
+        <header class="p-4 flex justify-between items-center flex-wrap gap-2">
              <h1 class="text-3xl font-bold tlearn-red-text"><span class="text-4xl">T</span>LEARN</h1>
              <div id="user-info" class="text-xs text-gray-500"></div>
-            <div class="flex items-center space-x-2 md:space-x-4 mt-2 md:mt-0">
-                <button id="study-plan-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">✨ Create Study Plan</button>
-                <button id="mock-test-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">Full Mock Test</button>
-                <button id="subject-test-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">Subject Test</button>
-                <button id="history-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md text-sm md:text-base">History</button>
+            <div class="flex items-center flex-wrap gap-2">
+                <button id="study-plan-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-sm">✨ Study Plan</button>
+                <button id="chapter-test-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md text-sm">Chapter Test</button>
+                <button id="chapter-exp-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md text-sm">Chapter Explanation</button>
+                <button id="subject-test-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md text-sm">Subject Test</button>
+                <button id="mock-test-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm">Full Mock Test</button>
+                <button id="history-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md text-sm">History</button>
             </div>
         </header>
 
@@ -167,12 +266,63 @@
     <div id="history-modal" class="modal">
         <div class="modal-content">
             <span id="close-history" class="close">&times;</span>
-            <h2 class="text-2xl font-bold mb-4">History</h2>
-            <div id="history-content">
-                <h3 class="text-xl font-semibold mb-2">Search History</h3>
-                <ul id="search-history-list" class="list-disc list-inside text-gray-300"></ul>
-                <h3 class="text-xl font-semibold mt-6 mb-2">Mock Test Tracker</h3>
-                <div id="mock-test-tracker"></div>
+            <h2 class="text-2xl font-bold mb-4">My Learning History</h2>
+            <div id="history-content"></div>
+        </div>
+    </div>
+
+    <!-- NEW: Chapter-wise Test Modal -->
+    <div id="chapter-test-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-chapter-test" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-center">🎯 Chapter-wise Test</h2>
+            <div class="space-y-4">
+                 <div>
+                    <label for="chapter-test-year" class="block text-sm font-medium text-gray-300">Year:</label>
+                    <select id="chapter-test-year" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1">
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="chapter-test-subject" class="block text-sm font-medium text-gray-300">Subject:</label>
+                    <select id="chapter-test-subject" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1"></select>
+                </div>
+                <div>
+                    <label for="chapter-test-chapter" class="block text-sm font-medium text-gray-300">Chapter:</label>
+                    <select id="chapter-test-chapter" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1"></select>
+                </div>
+                <button id="start-chapter-test-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-md">Start Chapter Test</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Chapter-wise Explanation Modal -->
+    <div id="chapter-explanation-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-chapter-explanation" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-center">🧠 Chapter-wise Explanation</h2>
+            <div class="space-y-4">
+                 <div>
+                    <label for="chapter-exp-year" class="block text-sm font-medium text-gray-300">Year:</label>
+                    <select id="chapter-exp-year" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1">
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="chapter-exp-subject" class="block text-sm font-medium text-gray-300">Subject:</label>
+                    <select id="chapter-exp-subject" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1"></select>
+                </div>
+                <div>
+                    <label for="chapter-exp-chapter" class="block text-sm font-medium text-gray-300">Chapter:</label>
+                    <select id="chapter-exp-chapter" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1"></select>
+                </div>
+                 <div>
+                    <label for="chapter-exp-topic" class="block text-sm font-medium text-gray-300">Specific Topic (Optional):</label>
+                    <input type="text" id="chapter-exp-topic" class="w-full bg-gray-800 text-white p-2 rounded-md mt-1" placeholder="e.g., Glycolysis steps">
+                </div>
+                <button id="get-explanation-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-md">Get Explanation</button>
             </div>
         </div>
     </div>
@@ -182,19 +332,19 @@
         // --- Firebase SDK Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Application State ---
         let db, auth, userId, appId;
-        let unsubscribeMockTests, unsubscribeSearchHistory;
+        let unsubscribeTestHistory, unsubscribeSearchHistory, unsubscribeExplanationHistory;
         let currentTestQuestions = [];
-        let mockTestHistory = [];
+        let combinedHistory = [];
         let timerInterval = null;
         let testStartTime = 0;
         let currentTestType = '';
+        let lastGreetingIndex = -1;
 
         // --- IMPORTANT: API KEY MANAGEMENT ---
-        // The user's Gemini API key is placed here.
         const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do"; 
 
         // --- DOM Elements Cache ---
@@ -205,6 +355,7 @@
             mainDashboard: document.getElementById('main-dashboard'),
             errorMessage: document.getElementById('error-message'),
             welcomeGreet: document.getElementById('welcome-greet'),
+            welcomeSubtext: document.getElementById('welcome-subtext'),
             searchBtn: document.getElementById('search-btn'),
             searchInput: document.getElementById('search-input'),
             resultsSection: document.getElementById('results-section'),
@@ -213,33 +364,63 @@
             subjectTestBtn: document.getElementById('subject-test-btn'),
             historyBtn: document.getElementById('history-btn'),
             studyPlanBtn: document.getElementById('study-plan-btn'),
+            chapterTestBtn: document.getElementById('chapter-test-btn'),
+            chapterExpBtn: document.getElementById('chapter-exp-btn'),
             mockTestModal: document.getElementById('mock-test-modal'),
             subjectTestModal: document.getElementById('subject-test-modal'),
             historyModal: document.getElementById('history-modal'),
             studyPlanModal: document.getElementById('study-plan-modal'),
+            chapterTestModal: document.getElementById('chapter-test-modal'),
+            chapterExplanationModal: document.getElementById('chapter-explanation-modal'),
             closeMockTest: document.getElementById('close-mock-test'),
             closeSubjectTest: document.getElementById('close-subject-test'),
             closeHistory: document.getElementById('close-history'),
             closeStudyPlan: document.getElementById('close-study-plan'),
+            closeChapterTest: document.getElementById('close-chapter-test'),
+            closeChapterExplanation: document.getElementById('close-chapter-explanation'),
             mockTestContent: document.getElementById('mock-test-content'),
             subjectChoiceContainer: document.getElementById('subject-choice-container'),
-            searchHistoryList: document.getElementById('search-history-list'),
-            mockTestTracker: document.getElementById('mock-test-tracker'),
+            historyContent: document.getElementById('history-content'),
             userInfoEl: document.getElementById('user-info'),
             generatePlanBtn: document.getElementById('generate-plan-btn'),
             studyPlanOutput: document.getElementById('study-plan-output'),
             studyWeeks: document.getElementById('study-weeks'),
             studySubjects: document.getElementById('study-subjects'),
+            chapterTestYear: document.getElementById('chapter-test-year'),
+            chapterTestSubject: document.getElementById('chapter-test-subject'),
+            chapterTestChapter: document.getElementById('chapter-test-chapter'),
+            startChapterTestBtn: document.getElementById('start-chapter-test-btn'),
+            chapterExpYear: document.getElementById('chapter-exp-year'),
+            chapterExpSubject: document.getElementById('chapter-exp-subject'),
+            chapterExpChapter: document.getElementById('chapter-exp-chapter'),
+            chapterExpTopic: document.getElementById('chapter-exp-topic'),
+            getExplanationBtn: document.getElementById('get-explanation-btn'),
         };
 
-        const greetings = [
-            "Why did the neuron break up with the axon? It felt there was no connection! Let's make some connections in biology today!",
-            "What do you call a biologist's favorite song? 'Sweet Home Alabama'... because it's full of relatives!",
-            "Why are chemists so good at solving problems? They have all the solutions! Time to find some for NEET.",
-            "If you're not part of the solution, you're part of the precipitate. Let's be the solution today!",
-            "Are you made of copper and tellurium? Because you're Cu-Te! Now let's get serious about studying.",
-            "Welcome, future doctor! Remember, the Krebs cycle is like a great story - it's all about the drama of electrons."
+        // NEW: Special greetings for Thanu
+        const specialGreetings = [
+            { main: "Welcome, Thanu!", sub: "Ready to show those MCQs who's boss?" },
+            { main: "Hello, Superstar!", sub: "Another day, another step closer to that white coat." },
+            { main: "Thanu is in the house!", sub: "Let's turn that brainpower up to 11." },
+            { main: "Hey there, Future Dr. Thanu!", sub: "Your journey is inspiring. Let's keep going!" },
+            { main: "It's a great day to study!", sub: "Let's make some magic happen, Thanu." }
         ];
+
+        // NEW: Comprehensive Syllabus Data
+        const syllabus = {
+            "1st Year": {
+                "Physics": ["Units and Measurements", "Motion in a Straight Line", "Motion in a Plane", "Laws of Motion", "Work, Energy and Power", "System of Particles and Rotational Motion", "Gravitation", "Mechanical Properties of Solids", "Mechanical Properties of Fluids", "Thermal Properties of Matter", "Thermodynamics", "Kinetic Theory", "Oscillations", "Waves"],
+                "Chemistry": ["Some Basic Concepts of Chemistry", "Structure of Atom", "Classification of Elements and Periodicity in Properties", "Chemical Bonding and Molecular Structure", "States of Matter", "Thermodynamics", "Equilibrium", "Redox Reactions", "Hydrogen", "The s-Block Elements", "The p-Block Elements (Groups 13 & 14)", "Organic Chemistry: Some Basic Principles and Techniques", "Hydrocarbons", "Environmental Chemistry"],
+                "Botany": ["The Living World", "Biological Classification", "Plant Kingdom", "Morphology of Flowering Plants", "Anatomy of Flowering Plants", "Structural Organisation in Animals", "Cell: The Unit of Life", "Biomolecules", "Cell Cycle and Cell Division", "Transport in Plants", "Mineral Nutrition", "Photosynthesis in Higher Plants", "Respiration in Plants", "Plant Growth and Development"],
+                "Zoology": ["Animal Kingdom", "Structural Organisation in Animals", "Digestion and Absorption", "Breathing and Exchange of Gases", "Body Fluids and Circulation", "Excretory Products and their Elimination", "Locomotion and Movement", "Neural Control and Coordination", "Chemical Coordination and Integration"]
+            },
+            "2nd Year": {
+                "Physics": ["Electric Charges and Fields", "Electrostatic Potential and Capacitance", "Current Electricity", "Moving Charges and Magnetism", "Magnetism and Matter", "Electromagnetic Induction", "Alternating Current", "Electromagnetic Waves", "Ray Optics and Optical Instruments", "Wave Optics", "Dual Nature of Radiation and Matter", "Atoms", "Nuclei", "Semiconductor Electronics: Materials, Devices and Simple Circuits"],
+                "Chemistry": ["The Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry", "General Principles and Processes of Isolation of Elements", "The p-Block Elements (Groups 15-18)", "The d- and f-Block Elements", "Coordination Compounds", "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", "Aldehydes, Ketones and Carboxylic Acids", "Amines", "Biomolecules", "Polymers", "Chemistry in Everyday Life"],
+                "Botany": ["Reproduction in Organisms", "Sexual Reproduction in Flowering Plants", "Principles of Inheritance and Variation", "Molecular Basis of Inheritance", "Strategies for Enhancement in Food Production", "Microbes in Human Welfare", "Biotechnology: Principles and Processes", "Biotechnology and its Applications", "Organisms and Populations", "Ecosystem", "Biodiversity and Conservation", "Environmental Issues"],
+                "Zoology": ["Human Reproduction", "Reproductive Health", "Evolution", "Human Health and Disease", "Strategies for Enhancement in Food Production", "Microbes in Human Welfare", "Biotechnology: Principles and Processes", "Biotechnology and its Applications", "Organisms and Populations", "Ecosystem", "Biodiversity and Conservation", "Environmental Issues"]
+            }
+        };
 
         // --- Event Listeners Setup ---
         function setupEventListeners() {
@@ -263,34 +444,65 @@
             ui.studyPlanBtn.addEventListener('click', () => ui.studyPlanModal.style.display = 'block');
             ui.generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
             
+            // New Chapter-wise buttons
+            ui.chapterTestBtn.addEventListener('click', () => ui.chapterTestModal.style.display = 'block');
+            ui.chapterExpBtn.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'block');
+            ui.startChapterTestBtn.addEventListener('click', startChapterTest);
+            ui.getExplanationBtn.addEventListener('click', handleChapterExplanation);
+
             // Modal close buttons
             ui.closeMockTest.addEventListener('click', () => ui.mockTestModal.style.display = 'none');
             ui.closeSubjectTest.addEventListener('click', () => ui.subjectTestModal.style.display = 'none');
             ui.closeHistory.addEventListener('click', () => ui.historyModal.style.display = 'none');
             ui.closeStudyPlan.addEventListener('click', () => ui.studyPlanModal.style.display = 'none');
+            ui.closeChapterTest.addEventListener('click', () => ui.chapterTestModal.style.display = 'none');
+            ui.closeChapterExplanation.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'none');
             
             // Close modal on outside click
             window.addEventListener('click', (event) => {
-                if (event.target == ui.mockTestModal) ui.mockTestModal.style.display = 'none';
-                if (event.target == ui.historyModal) ui.historyModal.style.display = 'none';
-                if (event.target == ui.subjectTestModal) ui.subjectTestModal.style.display = 'none';
-                if (event.target == ui.studyPlanModal) ui.studyPlanModal.style.display = 'none';
+                const modals = [ui.mockTestModal, ui.historyModal, ui.subjectTestModal, ui.studyPlanModal, ui.chapterTestModal, ui.chapterExplanationModal];
+                modals.forEach(modal => {
+                    if (event.target == modal) modal.style.display = 'none';
+                });
             });
+
+            // Dynamic filter listeners
+            ui.chapterTestYear.addEventListener('change', () => populateFilters('chapter-test'));
+            ui.chapterTestSubject.addEventListener('change', () => populateFilters('chapter-test'));
+            ui.chapterExpYear.addEventListener('change', () => populateFilters('chapter-exp'));
+            ui.chapterExpSubject.addEventListener('change', () => populateFilters('chapter-exp'));
         }
 
         // --- Core Application Logic ---
 
+        function getPersonalizedGreeting() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * specialGreetings.length);
+            } while (newIndex === lastGreetingIndex);
+            lastGreetingIndex = newIndex;
+            return specialGreetings[newIndex];
+        }
+
         async function handleLogin(password) {
             if (password === '02102008') {
                 await initFirebase(); 
-                ui.lockScreen.classList.add('hidden');
-                const randomGreet = greetings[Math.floor(Math.random() * greetings.length)];
-                ui.welcomeGreet.textContent = randomGreet;
+                ui.lockScreen.style.opacity = 0;
+                setTimeout(() => ui.lockScreen.classList.add('hidden'), 500);
+                
+                const { main, sub } = getPersonalizedGreeting();
+                ui.welcomeGreet.textContent = main;
+                ui.welcomeSubtext.textContent = sub;
+                ui.welcomeGreet.classList.add('fade-in-down');
+                ui.welcomeSubtext.classList.add('fade-in-up');
                 ui.welcomeScreen.classList.remove('hidden');
+                
                 setTimeout(() => {
                     ui.welcomeScreen.classList.add('hidden');
                     ui.mainDashboard.classList.remove('hidden');
-                }, 5000); 
+                    populateFilters('chapter-test');
+                    populateFilters('chapter-exp');
+                }, 20000); // Increased to 20 seconds
             } else {
                 ui.errorMessage.classList.remove('hidden');
                 ui.passwordInput.value = '';
@@ -339,13 +551,13 @@
                 throw new Error("Gemini API key is missing. Please add your key to the script to use AI features.");
             }
 
+            let lastError;
             for (let i = 0; i < retries; i++) {
-                const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), timeout);
-                let response;
-
                 try {
-                    response = await fetch(url, { 
+                    const controller = new AbortController();
+                    const id = setTimeout(() => controller.abort(), timeout);
+                    
+                    const response = await fetch(url, { 
                         method: 'POST', 
                         headers: { 'Content-Type': 'application/json' }, 
                         body: JSON.stringify(payload),
@@ -355,14 +567,7 @@
                     clearTimeout(id);
                     
                     if (response.status === 503) {
-                        if (i < retries - 1) {
-                            const delay = Math.pow(2, i) * 1000; // Exponential backoff
-                            if(onRetryMessage) onRetryMessage(`AI service is busy, retrying in ${delay / 1000}s... (Attempt ${i + 2})`);
-                            await new Promise(res => setTimeout(res, delay));
-                            continue; // Go to the next iteration to retry
-                        } else {
-                            throw new Error("API request failed: The AI service is currently unavailable after multiple retries (Error 503).");
-                        }
+                        throw new Error("API service is currently unavailable (503).");
                     }
                     
                     if (response.status === 400) {
@@ -373,13 +578,17 @@
                     }
                     return await response.json(); // Success
                 } catch (error) {
-                    clearTimeout(id);
+                    lastError = error;
                     if (error.name === 'AbortError') {
                         throw new Error('The request to the AI service timed out. Please try again.');
                     }
-                    // If it's the last retry and it still fails, or it's not a retryable error
-                    if (i === retries - 1 || (response && response.status !== 503)) {
-                        throw error;
+                    
+                    if (i < retries - 1 && error.message && error.message.includes("503")) {
+                        const delay = Math.pow(2, i) * 1000;
+                        if(onRetryMessage) onRetryMessage(`AI service is busy, retrying in ${delay / 1000}s... (Attempt ${i + 2})`);
+                        await new Promise(res => setTimeout(res, delay));
+                    } else {
+                        throw lastError;
                     }
                 }
             }
@@ -449,14 +658,7 @@
             ui.resultsSection.classList.remove('hidden');
             ui.geminiResponseEl.innerHTML = '<p>Loading explanation from AI...</p>';
             
-            try {
-                const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
-                await addDoc(searchHistoryCol, { query, timestamp: Date.now() });
-            } catch (error) {
-                console.error("Error saving search history:", error);
-            }
-
-            const structuredPrompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null.`;
+            const structuredPrompt = `For the concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null.`;
             const payload = { 
                 contents: [{ role: "user", parts: [{ text: structuredPrompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
@@ -472,6 +674,10 @@
                 
                 const data = safeJsonParse(jsonText);
                 renderStructuredResponse(ui.geminiResponseEl, data, query);
+                
+                // Save to history
+                const historyData = { type: 'search', query, response: JSON.stringify(data), timestamp: Date.now() };
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/searchHistory`), historyData);
 
             } catch (error) {
                  ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
@@ -486,7 +692,7 @@
             const subjects = ui.studySubjects.value;
             ui.studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
 
-            const prompt = `Create a detailed, day-by-day study plan for a NEET student for ${weeks} weeks, focusing on: ${subjects || 'all subjects'}. Format it clearly.`;
+            const prompt = `Create a detailed, day-by-day study plan for a student for ${weeks} weeks, focusing on: ${subjects || 'all subjects'}. Format it clearly.`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
@@ -501,6 +707,43 @@
                 ui.studyPlanOutput.innerHTML = `<p class="text-red-400">Error generating plan: ${error.message}</p>`;
             }
         }
+        
+        async function handleChapterExplanation() {
+            const year = ui.chapterExpYear.value;
+            const subject = ui.chapterExpSubject.value;
+            const chapter = ui.chapterExpChapter.value;
+            const topic = ui.chapterExpTopic.value.trim();
+            const query = topic ? `${topic} from the chapter ${chapter}` : `the chapter ${chapter}`;
+
+            ui.chapterExplanationModal.style.display = 'none';
+            ui.resultsSection.classList.remove('hidden');
+            ui.geminiResponseEl.innerHTML = `<p>Loading explanation for ${query}...</p>`;
+
+            const prompt = `Provide a detailed explanation for the topic: "${query}". If the concept is visual (e.g., cell structure, a physics diagram, a chemical reaction mechanism), please include a simplified SVG diagram string within the JSON response. The JSON object must have keys: "topic" (string), "explanation" (string), and "svgDiagram" (string, or null if not applicable).`;
+            const payload = { 
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+
+            try {
+                const result = await fetchApiResponse(apiUrl, payload, { 
+                    onRetryMessage: (msg) => ui.geminiResponseEl.innerHTML = `<p>${msg}</p>` 
+                });
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) throw new Error("Received an empty response from the AI service.");
+                
+                renderExplanationWithDiagram(ui.geminiResponseEl, jsonText, query);
+                
+                // Save to history
+                const historyData = { type: 'explanation', query, response: jsonText, timestamp: Date.now() };
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/explanationHistory`), historyData);
+
+            } catch (error) {
+                 ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            }
+        }
+
 
         // --- Mock Test Logic ---
 
@@ -534,9 +777,28 @@
                 handleTestGenerationError(paper, error);
             }
         }
-
-        async function generateQuestionsForSubject(subject, count, paperElement) {
-            const prompt = `Generate ${count} unique, high-quality multiple-choice questions for NEET exam preparation on the subject of ${subject}. Format as a valid JSON array of objects, with keys: "question", "options" (array of 4 strings), "answer" (string "A", "B", "C", or "D"), and "subject" ("${subject}").`;
+        
+        async function startChapterTest() {
+            const year = ui.chapterTestYear.value;
+            const subject = ui.chapterTestSubject.value;
+            const chapter = ui.chapterTestChapter.value;
+            currentTestType = `Chapter Test: ${chapter}`;
+            ui.chapterTestModal.style.display = 'none';
+            ui.mockTestModal.style.display = 'block';
+            const paper = prepareTestUI(true);
+            paper.innerHTML = `<p>Generating test for ${chapter}...</p>`;
+            try {
+                currentTestQuestions = await generateQuestionsForSubject(subject, 20, paper, chapter); // Generate 20 questions for a chapter test
+                displayQuestions(currentTestQuestions);
+                startTimer(20);
+            } catch (error) {
+                handleTestGenerationError(paper, error);
+            }
+        }
+        
+        async function generateQuestionsForSubject(subject, count, paperElement, chapter = null) {
+            const topic = chapter ? `from the chapter "${chapter}"` : `from various chapters`;
+            const prompt = `Generate ${count} unique, high-quality multiple-choice questions for the NEET exam on the subject of ${subject}, focusing on topics ${topic}. Format as a valid JSON array of objects, with keys: "question", "options" (array of 4 strings), "answer" (string "A", "B", "C", or "D"), and "subject" ("${subject}").`;
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
@@ -570,7 +832,8 @@
 
             const testResult = {
                 timestamp: Date.now(),
-                type: currentTestType,
+                type: 'test', // Unified type for all tests
+                testName: currentTestType,
                 timeTaken: formatTime(timeTakenMs),
                 score, correctCount, incorrectCount, unattemptedCount,
                 questions: JSON.stringify(currentTestQuestions), 
@@ -578,7 +841,7 @@
             };
             
             try {
-                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`), testResult);
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/testHistory`), testResult);
             } catch(error) {
                 console.error("Error saving mock test result:", error);
             }
@@ -589,23 +852,52 @@
         // --- UI Rendering & Updates ---
 
         function renderStructuredResponse(element, data, query) {
-            if (!data || !data.shortAnswer || !data.detailedAnswer) {
-                element.innerHTML = `<p class="text-yellow-400">The response from the model was not in the expected format. Please try again.</p>`;
-                return;
+            if (typeof data === 'object' && data !== null && data.shortAnswer && data.detailedAnswer) {
+                const derivationHtml = data.derivation ? `
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3>
+                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                    </div>` : '';
+                element.innerHTML = `
+                    <h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3>
+                    <div class="bg-gray-700 p-4 rounded-lg text-gray-300">${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
+                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                    </div>
+                    ${derivationHtml}`;
+            } else {
+                const rawText = (typeof data === 'object' && data !== null) ? JSON.stringify(data, null, 2) : String(data);
+                element.innerHTML = `
+                    <h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2>
+                    <p class="text-sm text-yellow-400 mb-4">(The AI response was not in the expected structured format, so it is displayed below as raw text.)</p>
+                    <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${rawText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
             }
-            const derivationHtml = data.derivation ? `
-                <div class="mt-6">
-                    <h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3>
-                    <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                </div>` : '';
-            element.innerHTML = `
-                <h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3>
-                <div class="bg-gray-700 p-4 rounded-lg text-gray-300">${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                <div class="mt-6">
-                    <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
-                    <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                </div>
-                ${derivationHtml}`;
+        }
+
+        function renderExplanationWithDiagram(element, responseText, query) {
+            try {
+                const data = safeJsonParse(responseText);
+                const diagramHtml = data.svgDiagram ? `
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2">Diagram</h3>
+                        <div class="bg-white p-4 rounded-lg flex justify-center items-center">
+                            ${data.svgDiagram}
+                        </div>
+                    </div>` : '';
+                element.innerHTML = `
+                    <h2 class="text-2xl font-bold text-cyan-400 mb-4">${data.topic}</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
+                        ${data.explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}
+                    </div>
+                    ${diagramHtml}`;
+            } catch (error) {
+                // If parsing fails, render the raw text as a fallback.
+                element.innerHTML = `
+                    <h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2>
+                    <p class="text-sm text-yellow-400 mb-4">(The AI response was not in the expected structured format, so it is displayed below as raw text.)</p>
+                    <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${responseText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
+            }
         }
 
         function resetFullTestModal() {
@@ -660,7 +952,7 @@
             const explanationsContainer = document.getElementById('explanations-container');
             explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for all questions... This may take a moment.</p>`;
             
-            const prompt = `For the following list of NEET questions, provide a clear, concise explanation for each one, explaining why the correct answer is right. Format the response as a valid JSON array of objects, where each object has a "question" key (matching the original question text) and an "explanation" key. Here are the questions: ${JSON.stringify(result.questions)}`;
+            const prompt = `For the following list of multiple-choice questions, provide a clear, concise explanation for each one, explaining why the correct answer is right. Format the response as a valid JSON array of objects, where each object has a "question" key (matching the original question text) and an "explanation" key. Here are the questions: ${JSON.stringify(result.questions)}`;
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
@@ -674,13 +966,11 @@
                 });
                 const explanations = safeJsonParse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
                 
-                // Create a map for easy lookup
                 const explanationMap = new Map();
                 explanations.forEach(exp => {
                     explanationMap.set(exp.question, exp.explanation);
                 });
 
-                // Inject explanations below each question in the review
                 result.questions.forEach((q, index) => {
                     const questionContainer = document.getElementById(`question-review-${index}`);
                     if (questionContainer) {
@@ -693,7 +983,63 @@
                         }
                     }
                 });
-                document.getElementById('explain-all-btn').style.display = 'none'; // Hide button after generating
+                document.getElementById('explanation-buttons').style.display = 'none';
+
+            } catch (error) {
+                explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
+            }
+        }
+
+        async function handleMistakeExplanations(result) {
+            const explanationsContainer = document.getElementById('explanations-container');
+            explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for your mistakes...</p>`;
+            
+            const incorrectQuestions = [];
+            result.questions.forEach((q, index) => {
+                if (result.userAnswers[index] && result.userAnswers[index] !== q.answer) {
+                    incorrectQuestions.push({
+                        question: q.question,
+                        options: q.options,
+                        yourAnswer: result.userAnswers[index],
+                        correctAnswer: q.answer
+                    });
+                }
+            });
+
+            const prompt = `For the following list of multiple-choice questions, I made mistakes. Please provide a clear, concise explanation for each one, explaining why my answer was wrong and the correct answer is right. Format the response as a valid JSON array of objects, where each object has a "question" key and an "explanation" key. Here are my mistakes: ${JSON.stringify(incorrectQuestions)}`;
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+
+            try {
+                const apiResult = await fetchApiResponse(apiUrl, payload, {
+                    timeout: 120000, 
+                    onRetryMessage: (msg) => explanationsContainer.innerHTML = `<p>${msg}</p>`
+                });
+                const explanations = safeJsonParse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
+                
+                const explanationMap = new Map();
+                explanations.forEach(exp => {
+                    explanationMap.set(exp.question, exp.explanation);
+                });
+
+                result.questions.forEach((q, index) => {
+                    if (result.userAnswers[index] && result.userAnswers[index] !== q.answer) {
+                        const questionContainer = document.getElementById(`question-review-${index}`);
+                        if (questionContainer) {
+                            const explanation = explanationMap.get(q.question);
+                            if (explanation) {
+                                const explanationDiv = document.createElement('div');
+                                explanationDiv.className = 'mt-4 p-3 bg-gray-900 border-l-2 border-yellow-500 rounded-r-lg';
+                                explanationDiv.innerHTML = `<h4 class="font-semibold text-yellow-300">Explanation:</h4><p class="text-gray-300">${explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</p>`;
+                                questionContainer.appendChild(explanationDiv);
+                            }
+                        }
+                    }
+                });
+                document.getElementById('explanation-buttons').style.display = 'none';
 
             } catch (error) {
                 explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
@@ -704,9 +1050,14 @@
             const questions = safeJsonParse(result.questions);
             const userAnswers = safeJsonParse(result.userAnswers);
 
-            let explainButtonHtml = `<button id="explain-all-btn" class="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All Questions</button>`;
+            let buttonsHtml = `<div id="explanation-buttons" class="space-y-4">`;
+            buttonsHtml += `<button id="explain-all-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All Questions</button>`;
+            if (result.incorrectCount > 0) {
+                buttonsHtml += `<button id="explain-mistakes-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 px-6 rounded-md">🤔 Explain My Mistakes</button>`;
+            }
+            buttonsHtml += `</div>`;
 
-            let resultsHtml = `<h2 class="text-3xl font-bold mb-4">${result.type} - Results</h2>
+            let resultsHtml = `<h2 class="text-3xl font-bold mb-4">${result.testName || result.type} - Results</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
                     <div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Score</p></div>
                     <div class="bg-green-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.correctCount}</p><p>Correct</p></div>
@@ -714,8 +1065,8 @@
                     <div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div>
                 </div>
                 <p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>
-                ${explainButtonHtml}
-                <div id="explanations-container"></div>
+                ${buttonsHtml}
+                <div id="explanations-container" class="mt-4"></div>
                 <h3 class="text-2xl font-bold mb-4 mt-6">Review Answers</h3>`;
             
             questions.forEach((q, index) => {
@@ -732,44 +1083,146 @@
             ui.mockTestContent.innerHTML = resultsHtml;
 
             document.getElementById('explain-all-btn').addEventListener('click', () => handleAllExplanations({ ...result, questions, userAnswers }));
+            if (result.incorrectCount > 0) {
+                document.getElementById('explain-mistakes-btn').addEventListener('click', () => handleMistakeExplanations({ ...result, questions, userAnswers }));
+            }
+        }
+        
+        function populateFilters(type) {
+            const camelCaseType = type.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+            const yearDropdown = ui[`${camelCaseType}Year`];
+            const subjectDropdown = ui[`${camelCaseType}Subject`];
+            const chapterDropdown = ui[`${camelCaseType}Chapter`];
+
+            if(!yearDropdown || !subjectDropdown || !chapterDropdown) return;
+
+            const year = yearDropdown.value;
+            const currentSubject = subjectDropdown.value;
+            
+            subjectDropdown.innerHTML = '';
+            Object.keys(syllabus[year]).forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                if (subject === currentSubject) {
+                    option.selected = true;
+                }
+                subjectDropdown.appendChild(option);
+            });
+
+            const selectedSubject = subjectDropdown.value || Object.keys(syllabus[year])[0];
+            chapterDropdown.innerHTML = '';
+            syllabus[year][selectedSubject].forEach(chapter => {
+                const option = document.createElement('option');
+                option.value = chapter;
+                option.textContent = chapter;
+                chapterDropdown.appendChild(option);
+            });
         }
         
         function setupHistoryListeners() {
             if (!userId) return;
-            const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
-            unsubscribeMockTests = onSnapshot(query(mockTestCol), (snapshot) => {
-                mockTestHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderHistory();
-            });
+            // Unsubscribe from old listeners if they exist
+            if (unsubscribeTestHistory) unsubscribeTestHistory();
+            if (unsubscribeSearchHistory) unsubscribeSearchHistory();
+            if (unsubscribeExplanationHistory) unsubscribeExplanationHistory();
+
+            const testHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/testHistory`);
             const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
-            unsubscribeSearchHistory = onSnapshot(query(searchHistoryCol), (snapshot) => {
-                ui.searchHistoryList.innerHTML = '';
-                const searches = snapshot.docs.map(doc => doc.data()).sort((a,b) => b.timestamp - a.timestamp); 
-                searches.forEach(search => {
-                    const li = document.createElement('li');
-                    li.textContent = search.query;
-                    ui.searchHistoryList.appendChild(li);
-                });
+            const explanationHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/explanationHistory`);
+
+            const updateCombinedHistory = () => {
+                const tests = testHistory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const searches = searchHistory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const explanations = explanationHistory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                combinedHistory = [...tests, ...searches, ...explanations].sort((a, b) => b.timestamp - a.timestamp);
+                renderHistory();
+            };
+
+            let testHistory = { docs: [] };
+            let searchHistory = { docs: [] };
+            let explanationHistory = { docs: [] };
+
+            unsubscribeTestHistory = onSnapshot(query(testHistoryCol, orderBy("timestamp", "desc")), (snapshot) => {
+                testHistory = snapshot;
+                updateCombinedHistory();
+            });
+            unsubscribeSearchHistory = onSnapshot(query(searchHistoryCol, orderBy("timestamp", "desc")), (snapshot) => {
+                searchHistory = snapshot;
+                updateCombinedHistory();
+            });
+            unsubscribeExplanationHistory = onSnapshot(query(explanationHistoryCol, orderBy("timestamp", "desc")), (snapshot) => {
+                explanationHistory = snapshot;
+                updateCombinedHistory();
             });
         }
 
         function renderHistory() {
-            ui.mockTestTracker.innerHTML = '';
-            if (!mockTestHistory || mockTestHistory.length === 0) {
-                 ui.mockTestTracker.innerHTML = '<p class="text-gray-400">No mock tests taken yet.</p>';
+            ui.historyContent.innerHTML = '';
+            if (!combinedHistory || combinedHistory.length === 0) {
+                 ui.historyContent.innerHTML = '<p class="text-gray-400">No history yet. Take a test or search for a concept to get started!</p>';
                  return;
             }
-            mockTestHistory.sort((a,b) => b.timestamp - a.timestamp).forEach(result => {
-                const record = document.createElement('div');
-                record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
-                record.innerHTML = `<div><p class="font-bold">${result.type}</p><p>Score: ${result.score}</p></div>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">View</button>`;
-                record.querySelector('button').addEventListener('click', () => {
-                    ui.historyModal.style.display = 'none';
-                    ui.mockTestModal.style.display = 'block';
-                    displayResults(result);
+
+            const groupedByDate = combinedHistory.reduce((acc, result) => {
+                const date = new Date(result.timestamp).toLocaleDateString('en-CA'); 
+                if (!acc[date]) acc[date] = [];
+                acc[date].push(result);
+                return acc;
+            }, {});
+
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(dateStr => {
+                const dateHeading = document.createElement('h3');
+                dateHeading.className = 'text-lg font-semibold mt-4 mb-2 text-gray-400';
+                
+                const today = new Date().toLocaleDateString('en-CA');
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (dateStr === today) {
+                    dateHeading.textContent = 'Today';
+                } else if (dateStr === yesterday.toLocaleDateString('en-CA')) {
+                    dateHeading.textContent = 'Yesterday';
+                } else {
+                    dateHeading.textContent = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                }
+                ui.historyContent.appendChild(dateHeading);
+
+                groupedByDate[dateStr].forEach(item => {
+                    const record = document.createElement('div');
+                    record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
+                    const itemTime = new Date(item.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    
+                    let itemHtml = '';
+                    if (item.type === 'test') {
+                        itemHtml = `<div><p class="font-bold">${item.testName}</p><p>Score: ${item.score}</p></div>`;
+                    } else if (item.type === 'search') {
+                        itemHtml = `<div><p class="font-bold">Searched:</p><p>${item.query}</p></div>`;
+                    } else if (item.type === 'explanation') {
+                        itemHtml = `<div><p class="font-bold">Explained:</p><p>${item.query}</p></div>`;
+                    }
+                    
+                    record.innerHTML = `${itemHtml}<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">View</button>`;
+                    
+                    record.querySelector('button').addEventListener('click', () => {
+                        ui.historyModal.style.display = 'none';
+                        if (item.type === 'test') {
+                            ui.mockTestModal.style.display = 'block';
+                            displayResults(item);
+                        } else {
+                            ui.resultsSection.classList.remove('hidden');
+                            if (item.type === 'search') {
+                                renderStructuredResponse(ui.geminiResponseEl, JSON.parse(item.response), item.query);
+                            } else if (item.type === 'explanation') {
+                                renderExplanationWithDiagram(ui.geminiResponseEl, item.response, item.query);
+                            }
+                        }
+                    });
+                    ui.historyContent.appendChild(record);
                 });
-                ui.mockTestTracker.appendChild(record);
             });
         }
 
