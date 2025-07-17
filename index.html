@@ -11,7 +11,7 @@
             font-family: 'Inter', sans-serif;
         }
         .tlearn-bg {
-            background-color: #141414;
+            background-color: #0d0d0d; /* Darker background for more contrast */
         }
         .tlearn-red {
             background-color: #E50914;
@@ -19,15 +19,11 @@
         .tlearn-red-text {
             color: #E50914;
         }
-        .search-bar-container {
-            background-color: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
         
-        /* --- Upgraded Lock Screen Styles --- */
+        /* --- Lock Screen Styles --- */
         #lock-screen {
             background-color: #000;
-            overflow: hidden; /* Hide overflowing aurora elements */
+            overflow: hidden;
             transition: opacity 0.5s ease-in-out;
         }
 
@@ -48,45 +44,24 @@
         }
 
         .aurora-element:nth-child(1) {
-            width: 50vw;
-            height: 50vw;
-            max-width: 500px;
-            max-height: 500px;
+            width: 50vw; height: 50vw; max-width: 500px; max-height: 500px;
             background: radial-gradient(circle, rgba(229,9,20,0.5) 0%, rgba(229,9,20,0) 70%);
-            top: -20%;
-            left: -10%;
-            animation-duration: 18s;
+            top: -20%; left: -10%; animation-duration: 18s;
         }
-
         .aurora-element:nth-child(2) {
-            width: 60vw;
-            height: 60vw;
-            max-width: 600px;
-            max-height: 600px;
+            width: 60vw; height: 60vw; max-width: 600px; max-height: 600px;
             background: radial-gradient(circle, rgba(48,43,99,0.5) 0%, rgba(48,43,99,0) 70%);
-            bottom: -30%;
-            right: -20%;
-            animation-duration: 25s;
+            bottom: -30%; right: -20%; animation-duration: 25s;
         }
-        
         .aurora-element:nth-child(3) {
-            width: 40vw;
-            height: 40vw;
-            max-width: 400px;
-            max-height: 400px;
+            width: 40vw; height: 40vw; max-width: 400px; max-height: 400px;
             background: radial-gradient(circle, rgba(0, 255, 159, 0.3) 0%, rgba(36,36,62,0) 70%);
-            top: 10%;
-            right: 10%;
-            animation-duration: 22s;
+            top: 10%; right: 10%; animation-duration: 22s;
         }
 
         @keyframes move {
-            from {
-                transform: translate(0, 0) rotate(0deg);
-            }
-            to {
-                transform: translate(100px, 50px) rotate(45deg);
-            }
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(100px, 50px) rotate(45deg); }
         }
         
         .glassmorphism-box {
@@ -102,7 +77,7 @@
             border-color: #E50914;
         }
 
-        /* NEW: Welcome screen animations */
+        /* --- Welcome Screen Animations --- */
         @keyframes fadeInDown {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -114,55 +89,61 @@
         .fade-in-down { animation: fadeInDown 1.5s ease-out forwards; }
         .fade-in-up { animation: fadeInUp 1.5s ease-out 0.5s forwards; opacity: 0; }
         
+        /* --- Modal Styles --- */
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
+            display: none; position: fixed; z-index: 100; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
         }
         .modal-content {
-            background-color: #1f1f1f;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 900px;
-            border-radius: 10px;
-            max-height: 90vh;
-            overflow-y: auto;
+            background-color: #1f1f1f; margin: 5% auto; padding: 20px;
+            border: 1px solid #888; width: 90%; max-width: 900px;
+            border-radius: 10px; max-height: 90vh; overflow-y: auto;
         }
         .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+            color: #aaa; float: right; font-size: 28px; font-weight: bold;
         }
-        .close:hover,
-        .close:focus {
-            color: white;
-            text-decoration: none;
-            cursor: pointer;
+        .close:hover, .close:focus {
+            color: white; text-decoration: none; cursor: pointer;
         }
         .correct-answer {
-            background-color: rgba(4, 120, 87, 0.3);
-            padding: 2px 4px;
-            border-radius: 4px;
+            background-color: rgba(4, 120, 87, 0.3); padding: 2px 4px; border-radius: 4px;
         }
         .incorrect-answer {
-            background-color: rgba(224, 62, 62, 0.3);
-            padding: 2px 4px;
-            border-radius: 4px;
-            text-decoration: line-through;
+            background-color: rgba(224, 62, 62, 0.3); padding: 2px 4px; border-radius: 4px; text-decoration: line-through;
         }
         select {
-            background-color: #2d3748;
-            color: white;
+            background-color: #2d3748; color: white;
+        }
+
+        /* --- Attractive Dashboard Styles --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .action-card {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .action-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+        }
+        .main-dashboard-bg {
+            background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0);
+            background-size: 2rem 2rem;
+            animation: bg-pan 30s linear infinite;
+        }
+        @keyframes bg-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+        /* NEW: Mic button listening animation */
+        .mic-listening {
+            box-shadow: 0 0 15px 5px rgba(229, 9, 20, 0.7);
         }
     </style>
 </head>
@@ -192,34 +173,45 @@
     </div>
 
     <!-- Main Dashboard -->
-    <div id="main-dashboard" class="hidden">
-        <header class="p-4 flex justify-between items-center flex-wrap gap-2">
+    <div id="main-dashboard" class="hidden main-dashboard-bg">
+        <header class="sticky top-0 z-50 p-4 flex justify-between items-center glass-panel mx-4 mt-4">
              <h1 class="text-3xl font-bold tlearn-red-text"><span class="text-4xl">T</span>LEARN</h1>
-             <div id="user-info" class="text-xs text-gray-500"></div>
-            <div class="flex items-center flex-wrap gap-2">
-                <button id="study-plan-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md text-sm">✨ Study Plan</button>
-                <button id="chapter-test-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md text-sm">Chapter Test</button>
-                <button id="chapter-exp-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md text-sm">Chapter Explanation</button>
-                <button id="subject-test-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md text-sm">Subject Test</button>
-                <button id="mock-test-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md text-sm">Full Mock Test</button>
-                <button id="history-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-md text-sm">History</button>
-            </div>
+             <button id="icon-history-btn" class="bg-gray-700/50 hover:bg-gray-600/50 p-2 rounded-full transition-colors">
+                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+             </button>
         </header>
 
         <main class="p-4 md:p-8">
-            <!-- Search Section -->
-            <div class="search-bar-container p-6 md:p-10 rounded-lg text-center mb-8">
-                <h2 class="text-3xl md:text-5xl font-bold mb-6">What concept are you exploring today?</h2>
-                <div class="flex flex-col md:flex-row justify-center items-center max-w-4xl mx-auto">
-                    <input type="text" id="search-input" class="w-full md:w-3/4 bg-gray-800 text-white p-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., 'Derive the formula for kinetic energy'">
-                    <button id="search-btn" class="w-full md:w-auto mt-4 md:mt-0 md:ml-4 tlearn-red hover:bg-red-700 text-white font-bold py-4 px-8 rounded-md text-lg">Search</button>
-                </div>
+            <h2 class="text-4xl font-bold mb-8 text-center">What will you conquer today, Thanu?</h2>
+            
+            <div class="flex items-center justify-center flex-wrap gap-3 mb-8">
+                <button id="study-plan-btn" class="action-button bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full text-sm">✨ Study Plan</button>
+                <button id="chapter-test-btn" class="action-button bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-full text-sm">Chapter Test</button>
+                <button id="chapter-exp-btn" class="action-button bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-full text-sm">Chapter Explanation</button>
+                <button id="subject-test-btn" class="action-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full text-sm">Subject Test</button>
+                <button id="mock-test-btn" class="action-button bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full text-sm">Full Mock Test</button>
             </div>
 
-            <!-- Results Section -->
-            <div id="results-section" class="hidden">
-                <div id="gemini-response" class="p-4 bg-gray-800 rounded-md"></div>
+            <!-- Search Section -->
+            <div class="glass-panel p-6 md:p-10 text-center mb-12">
+                <h3 class="text-2xl font-bold mb-4">Explore a Concept</h3>
+                <div class="relative max-w-4xl mx-auto">
+                    <button id="mic-btn" class="absolute inset-y-0 left-0 pl-4 flex items-center cursor-pointer">
+                        <svg class="h-6 w-6 text-gray-400 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    </button>
+                    <input type="text" id="search-input" class="w-full bg-gray-800 text-white p-4 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-red-500 pl-14 pr-10">
+                    <button id="clear-search-btn" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer hidden">
+                        <svg class="h-6 w-6 text-gray-500 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                 <button id="search-btn" class="w-full md:w-auto mt-4 tlearn-red hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full text-lg">Search</button>
             </div>
+            
+            <!-- Results Section -->
+            <div id="results-section" class="hidden my-8">
+                <div id="gemini-response" class="p-6 glass-panel"></div>
+            </div>
+
         </main>
     </div>
 
@@ -358,11 +350,13 @@
             welcomeSubtext: document.getElementById('welcome-subtext'),
             searchBtn: document.getElementById('search-btn'),
             searchInput: document.getElementById('search-input'),
+            clearSearchBtn: document.getElementById('clear-search-btn'),
+            micBtn: document.getElementById('mic-btn'),
             resultsSection: document.getElementById('results-section'),
             geminiResponseEl: document.getElementById('gemini-response'),
             mockTestBtn: document.getElementById('mock-test-btn'),
             subjectTestBtn: document.getElementById('subject-test-btn'),
-            historyBtn: document.getElementById('history-btn'),
+            historyBtn: document.getElementById('icon-history-btn'), // Changed to new icon button
             studyPlanBtn: document.getElementById('study-plan-btn'),
             chapterTestBtn: document.getElementById('chapter-test-btn'),
             chapterExpBtn: document.getElementById('chapter-exp-btn'),
@@ -381,7 +375,6 @@
             mockTestContent: document.getElementById('mock-test-content'),
             subjectChoiceContainer: document.getElementById('subject-choice-container'),
             historyContent: document.getElementById('history-content'),
-            userInfoEl: document.getElementById('user-info'),
             generatePlanBtn: document.getElementById('generate-plan-btn'),
             studyPlanOutput: document.getElementById('study-plan-output'),
             studyWeeks: document.getElementById('study-weeks'),
@@ -428,6 +421,15 @@
                 if (e.target.value.length === 8) handleLogin(e.target.value);
             });
             ui.searchBtn.addEventListener('click', handleSearch);
+            
+            // Search input listeners for clear button and mic
+            ui.searchInput.addEventListener('input', () => {
+                ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value === '');
+            });
+            ui.clearSearchBtn.addEventListener('click', handleClearSearch);
+            ui.micBtn.addEventListener('click', handleVoiceSearch);
+
+            // Action Card / Button listeners
             ui.mockTestBtn.addEventListener('click', () => {
                 resetFullTestModal();
                 ui.mockTestModal.style.display = 'block';
@@ -532,7 +534,6 @@
                 userId = auth.currentUser?.uid;
                 if (!userId) throw new Error("Authentication failed, user ID is not available.");
                 
-                ui.userInfoEl.textContent = `UserID: ${userId}`;
                 setupHistoryListeners();
 
             } catch (error) {
@@ -649,6 +650,47 @@
 
         // --- Feature Handlers ---
 
+        function handleClearSearch() {
+            ui.searchInput.value = '';
+            ui.geminiResponseEl.innerHTML = '';
+            ui.resultsSection.classList.add('hidden');
+            ui.clearSearchBtn.classList.add('hidden');
+        }
+
+        function handleVoiceSearch() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Sorry, your browser doesn't support voice recognition.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            ui.micBtn.classList.add('mic-listening');
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                ui.searchInput.value = speechResult;
+                ui.clearSearchBtn.classList.remove('hidden');
+                handleSearch(); // Automatically search after speech
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+                ui.micBtn.classList.remove('mic-listening');
+            };
+
+            recognition.onerror = (event) => {
+                alert(`Error occurred in recognition: ${event.error}`);
+                ui.micBtn.classList.remove('mic-listening');
+            };
+            
+            recognition.start();
+        }
+
         async function handleSearch() {
             const query = ui.searchInput.value.trim();
             if (!query || !userId) return;
@@ -658,7 +700,7 @@
             ui.resultsSection.classList.remove('hidden');
             ui.geminiResponseEl.innerHTML = '<p>Loading explanation from AI...</p>';
             
-            const structuredPrompt = `For the concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null.`;
+            const structuredPrompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null.`;
             const payload = { 
                 contents: [{ role: "user", parts: [{ text: structuredPrompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
@@ -719,7 +761,7 @@
             ui.resultsSection.classList.remove('hidden');
             ui.geminiResponseEl.innerHTML = `<p>Loading explanation for ${query}...</p>`;
 
-            const prompt = `Provide a detailed explanation for the topic: "${query}". If the concept is visual (e.g., cell structure, a physics diagram, a chemical reaction mechanism), please include a simplified SVG diagram string within the JSON response. The JSON object must have keys: "topic" (string), "explanation" (string), and "svgDiagram" (string, or null if not applicable).`;
+            const prompt = `Provide a detailed explanation for the NEET topic: "${query}". If the concept is visual (e.g., cell structure, a physics diagram, a chemical reaction mechanism), please include a simplified SVG diagram string within the JSON response. The JSON object must have keys: "topic" (string), "explanation" (string), and "svgDiagram" (string, or null if not applicable).`;
             const payload = { 
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
