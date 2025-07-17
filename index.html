@@ -342,9 +342,10 @@
             for (let i = 0; i < retries; i++) {
                 const controller = new AbortController();
                 const id = setTimeout(() => controller.abort(), timeout);
+                let response;
 
                 try {
-                    const response = await fetch(url, { 
+                    response = await fetch(url, { 
                         method: 'POST', 
                         headers: { 'Content-Type': 'application/json' }, 
                         body: JSON.stringify(payload),
@@ -377,7 +378,7 @@
                         throw new Error('The request to the AI service timed out. Please try again.');
                     }
                     // If it's the last retry and it still fails, or it's not a retryable error
-                    if (i === retries - 1 || response.status !== 503) {
+                    if (i === retries - 1 || (response && response.status !== 503)) {
                         throw error;
                     }
                 }
@@ -391,18 +392,46 @@
             }
             try {
                 let cleanedText = jsonText.trim();
+                
                 if (cleanedText.startsWith("```json")) {
-                    cleanedText = cleanedText.substring(7);
+                    cleanedText = cleanedText.substring(7).trim();
                 }
                 if (cleanedText.endsWith("```")) {
-                    cleanedText = cleanedText.slice(0, -3);
+                    cleanedText = cleanedText.slice(0, -3).trim();
                 }
-                const startIndex = cleanedText.indexOf('{');
-                const endIndex = cleanedText.lastIndexOf('}');
-                if (startIndex !== -1 && endIndex !== -1) {
-                    cleanedText = cleanedText.substring(startIndex, endIndex + 1);
+
+                const firstChar = cleanedText.charAt(0);
+                const lastChar = cleanedText.charAt(cleanedText.length - 1);
+
+                if ((firstChar === '{' && lastChar === '}') || (firstChar === '[' && lastChar === ']')) {
+                    return JSON.parse(cleanedText);
                 }
-                return JSON.parse(cleanedText);
+                
+                const startIndex = cleanedText.indexOf('[');
+                const startIndexObj = cleanedText.indexOf('{');
+
+                if (startIndex === -1 && startIndexObj === -1) {
+                    throw new Error("No JSON object or array found in the response.");
+                }
+
+                let finalJsonText;
+                if (startIndex !== -1 && (startIndex < startIndexObj || startIndexObj === -1)) {
+                    const endIndex = cleanedText.lastIndexOf(']');
+                    if (endIndex > startIndex) {
+                        finalJsonText = cleanedText.substring(startIndex, endIndex + 1);
+                    }
+                } else if (startIndexObj !== -1) {
+                    const endIndex = cleanedText.lastIndexOf('}');
+                    if (endIndex > startIndexObj) {
+                        finalJsonText = cleanedText.substring(startIndexObj, endIndex + 1);
+                    }
+                }
+
+                if (!finalJsonText) {
+                    throw new Error("Could not extract a valid JSON structure from the response.");
+                }
+
+                return JSON.parse(finalJsonText);
             } catch (e) {
                 console.error("JSON Parsing Error:", e, "Raw text:", jsonText);
                 throw new Error("The AI model returned an invalid JSON format. Please try again.");
@@ -627,9 +656,56 @@
             document.getElementById('submit-test-btn').addEventListener('click', handleSubmitTest);
         }
 
+        async function handleAllExplanations(result) {
+            const explanationsContainer = document.getElementById('explanations-container');
+            explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for all questions... This may take a moment.</p>`;
+            
+            const prompt = `For the following list of NEET questions, provide a clear, concise explanation for each one, explaining why the correct answer is right. Format the response as a valid JSON array of objects, where each object has a "question" key (matching the original question text) and an "explanation" key. Here are the questions: ${JSON.stringify(result.questions)}`;
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+
+            try {
+                const apiResult = await fetchApiResponse(apiUrl, payload, {
+                    timeout: 180000, // 3-minute timeout for all explanations
+                    onRetryMessage: (msg) => explanationsContainer.innerHTML = `<p>${msg}</p>`
+                });
+                const explanations = safeJsonParse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
+                
+                // Create a map for easy lookup
+                const explanationMap = new Map();
+                explanations.forEach(exp => {
+                    explanationMap.set(exp.question, exp.explanation);
+                });
+
+                // Inject explanations below each question in the review
+                result.questions.forEach((q, index) => {
+                    const questionContainer = document.getElementById(`question-review-${index}`);
+                    if (questionContainer) {
+                        const explanation = explanationMap.get(q.question);
+                        if (explanation) {
+                            const explanationDiv = document.createElement('div');
+                            explanationDiv.className = 'mt-4 p-3 bg-gray-900 border-l-2 border-blue-500 rounded-r-lg';
+                            explanationDiv.innerHTML = `<h4 class="font-semibold text-blue-300">Explanation:</h4><p class="text-gray-300">${explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</p>`;
+                            questionContainer.appendChild(explanationDiv);
+                        }
+                    }
+                });
+                document.getElementById('explain-all-btn').style.display = 'none'; // Hide button after generating
+
+            } catch (error) {
+                explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
+            }
+        }
+
         function displayResults(result) {
             const questions = safeJsonParse(result.questions);
             const userAnswers = safeJsonParse(result.userAnswers);
+
+            let explainButtonHtml = `<button id="explain-all-btn" class="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All Questions</button>`;
+
             let resultsHtml = `<h2 class="text-3xl font-bold mb-4">${result.type} - Results</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
                     <div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Score</p></div>
@@ -638,7 +714,9 @@
                     <div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div>
                 </div>
                 <p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>
-                <h3 class="text-2xl font-bold mb-4">Review Answers</h3>`;
+                ${explainButtonHtml}
+                <div id="explanations-container"></div>
+                <h3 class="text-2xl font-bold mb-4 mt-6">Review Answers</h3>`;
             
             questions.forEach((q, index) => {
                 const userAnswer = userAnswers[index];
@@ -649,9 +727,11 @@
                     else if (optionLetter === userAnswer) labelClass = 'incorrect-answer';
                     return `<div><label class="ml-2 ${labelClass}">${optionLetter}) ${opt}</label></div>`;
                 }).join('');
-                resultsHtml += `<div class="mb-6 p-4 bg-gray-800 rounded-lg"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2">${optionsHtml}</div></div>`;
+                resultsHtml += `<div id="question-review-${index}" class="mb-6 p-4 bg-gray-800 rounded-lg"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2">${optionsHtml}</div></div>`;
             });
             ui.mockTestContent.innerHTML = resultsHtml;
+
+            document.getElementById('explain-all-btn').addEventListener('click', () => handleAllExplanations({ ...result, questions, userAnswers }));
         }
         
         function setupHistoryListeners() {
