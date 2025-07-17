@@ -37,6 +37,7 @@
             height: 100%;
             overflow: auto;
             background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
         }
         .modal-content {
             background-color: #1f1f1f;
@@ -183,50 +184,53 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase State ---
+        // --- Application State ---
         let db, auth, userId, appId;
         let unsubscribeMockTests, unsubscribeSearchHistory;
-
-        // --- Global State ---
         let currentTestQuestions = [];
         let mockTestHistory = [];
         let timerInterval = null;
         let testStartTime = 0;
         let currentTestType = '';
 
-        // --- DOM Elements ---
-        const passwordInput = document.getElementById('password-input');
-        const lockScreen = document.getElementById('lock-screen');
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const mainDashboard = document.getElementById('main-dashboard');
-        const errorMessage = document.getElementById('error-message');
-        const welcomeGreet = document.getElementById('welcome-greet');
-        const searchBtn = document.getElementById('search-btn');
-        const searchInput = document.getElementById('search-input');
-        const resultsSection = document.getElementById('results-section');
-        const geminiResponseEl = document.getElementById('gemini-response');
-        const mockTestBtn = document.getElementById('mock-test-btn');
-        const subjectTestBtn = document.getElementById('subject-test-btn');
-        const historyBtn = document.getElementById('history-btn');
-        const studyPlanBtn = document.getElementById('study-plan-btn');
-        const mockTestModal = document.getElementById('mock-test-modal');
-        const subjectTestModal = document.getElementById('subject-test-modal');
-        const historyModal = document.getElementById('history-modal');
-        const studyPlanModal = document.getElementById('study-plan-modal');
-        const closeMockTest = document.getElementById('close-mock-test');
-        const closeSubjectTest = document.getElementById('close-subject-test');
-        const closeHistory = document.getElementById('close-history');
-        const closeStudyPlan = document.getElementById('close-study-plan');
-        const mockTestContent = document.getElementById('mock-test-content');
-        const subjectChoiceContainer = document.getElementById('subject-choice-container');
-        const searchHistoryList = document.getElementById('search-history-list');
-        const mockTestTracker = document.getElementById('mock-test-tracker');
-        const userInfoEl = document.getElementById('user-info');
-        const generatePlanBtn = document.getElementById('generate-plan-btn');
-        const studyPlanOutput = document.getElementById('study-plan-output');
+        // --- IMPORTANT: API KEY MANAGEMENT ---
+        // The user's Gemini API key is placed here.
+        const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do"; 
 
-        // --- API Keys ---
-        const geminiApiKey = "AIzaSyBXO4xb-8_uEcWQU_VzkGFt9GPFYx69NO0";
+        // --- DOM Elements Cache ---
+        const ui = {
+            passwordInput: document.getElementById('password-input'),
+            lockScreen: document.getElementById('lock-screen'),
+            welcomeScreen: document.getElementById('welcome-screen'),
+            mainDashboard: document.getElementById('main-dashboard'),
+            errorMessage: document.getElementById('error-message'),
+            welcomeGreet: document.getElementById('welcome-greet'),
+            searchBtn: document.getElementById('search-btn'),
+            searchInput: document.getElementById('search-input'),
+            resultsSection: document.getElementById('results-section'),
+            geminiResponseEl: document.getElementById('gemini-response'),
+            mockTestBtn: document.getElementById('mock-test-btn'),
+            subjectTestBtn: document.getElementById('subject-test-btn'),
+            historyBtn: document.getElementById('history-btn'),
+            studyPlanBtn: document.getElementById('study-plan-btn'),
+            mockTestModal: document.getElementById('mock-test-modal'),
+            subjectTestModal: document.getElementById('subject-test-modal'),
+            historyModal: document.getElementById('history-modal'),
+            studyPlanModal: document.getElementById('study-plan-modal'),
+            closeMockTest: document.getElementById('close-mock-test'),
+            closeSubjectTest: document.getElementById('close-subject-test'),
+            closeHistory: document.getElementById('close-history'),
+            closeStudyPlan: document.getElementById('close-study-plan'),
+            mockTestContent: document.getElementById('mock-test-content'),
+            subjectChoiceContainer: document.getElementById('subject-choice-container'),
+            searchHistoryList: document.getElementById('search-history-list'),
+            mockTestTracker: document.getElementById('mock-test-tracker'),
+            userInfoEl: document.getElementById('user-info'),
+            generatePlanBtn: document.getElementById('generate-plan-btn'),
+            studyPlanOutput: document.getElementById('study-plan-output'),
+            studyWeeks: document.getElementById('study-weeks'),
+            studySubjects: document.getElementById('study-subjects'),
+        };
 
         const greetings = [
             "Why did the neuron break up with the axon? It felt there was no connection! Let's make some connections in biology today!",
@@ -237,59 +241,66 @@
             "Welcome, future doctor! Remember, the Krebs cycle is like a great story - it's all about the drama of electrons."
         ];
 
-        // --- Event Listeners ---
-        passwordInput.addEventListener('input', (e) => {
-            if (e.target.value.length === 8) handleLogin(e.target.value);
-        });
-        searchBtn.addEventListener('click', handleSearch);
-        mockTestBtn.addEventListener('click', () => {
-            resetFullTestModal();
-            mockTestModal.style.display = 'block';
-        });
-        subjectTestBtn.addEventListener('click', () => subjectTestModal.style.display = 'block');
-        subjectChoiceContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('subject-choice-btn')) {
-                const subject = e.target.dataset.subject;
-                subjectTestModal.style.display = 'none';
-                startSubjectTest(subject);
-            }
-        });
-        historyBtn.addEventListener('click', () => historyModal.style.display = 'block');
-        studyPlanBtn.addEventListener('click', () => studyPlanModal.style.display = 'block');
-        generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
-        closeMockTest.addEventListener('click', () => mockTestModal.style.display = 'none');
-        closeSubjectTest.addEventListener('click', () => subjectTestModal.style.display = 'none');
-        closeHistory.addEventListener('click', () => historyModal.style.display = 'none');
-        closeStudyPlan.addEventListener('click', () => studyPlanModal.style.display = 'none');
-        window.addEventListener('click', (event) => {
-            if (event.target == mockTestModal) mockTestModal.style.display = 'none';
-            if (event.target == historyModal) historyModal.style.display = 'none';
-            if (event.target == subjectTestModal) subjectTestModal.style.display = 'none';
-            if (event.target == studyPlanModal) studyPlanModal.style.display = 'none';
-        });
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            ui.passwordInput.addEventListener('input', (e) => {
+                if (e.target.value.length === 8) handleLogin(e.target.value);
+            });
+            ui.searchBtn.addEventListener('click', handleSearch);
+            ui.mockTestBtn.addEventListener('click', () => {
+                resetFullTestModal();
+                ui.mockTestModal.style.display = 'block';
+            });
+            ui.subjectTestBtn.addEventListener('click', () => ui.subjectTestModal.style.display = 'block');
+            ui.subjectChoiceContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('subject-choice-btn')) {
+                    const subject = e.target.dataset.subject;
+                    ui.subjectTestModal.style.display = 'none';
+                    startSubjectTest(subject);
+                }
+            });
+            ui.historyBtn.addEventListener('click', () => ui.historyModal.style.display = 'block');
+            ui.studyPlanBtn.addEventListener('click', () => ui.studyPlanModal.style.display = 'block');
+            ui.generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
+            
+            // Modal close buttons
+            ui.closeMockTest.addEventListener('click', () => ui.mockTestModal.style.display = 'none');
+            ui.closeSubjectTest.addEventListener('click', () => ui.subjectTestModal.style.display = 'none');
+            ui.closeHistory.addEventListener('click', () => ui.historyModal.style.display = 'none');
+            ui.closeStudyPlan.addEventListener('click', () => ui.studyPlanModal.style.display = 'none');
+            
+            // Close modal on outside click
+            window.addEventListener('click', (event) => {
+                if (event.target == ui.mockTestModal) ui.mockTestModal.style.display = 'none';
+                if (event.target == ui.historyModal) ui.historyModal.style.display = 'none';
+                if (event.target == ui.subjectTestModal) ui.subjectTestModal.style.display = 'none';
+                if (event.target == ui.studyPlanModal) ui.studyPlanModal.style.display = 'none';
+            });
+        }
 
-        // --- Functions ---
+        // --- Core Application Logic ---
+
         async function handleLogin(password) {
             if (password === '02102008') {
-                await initFirebase(); // Initialize Firebase on successful login
-                lockScreen.classList.add('hidden');
+                await initFirebase(); 
+                ui.lockScreen.classList.add('hidden');
                 const randomGreet = greetings[Math.floor(Math.random() * greetings.length)];
-                welcomeGreet.textContent = randomGreet;
-                welcomeScreen.classList.remove('hidden');
+                ui.welcomeGreet.textContent = randomGreet;
+                ui.welcomeScreen.classList.remove('hidden');
                 setTimeout(() => {
-                    welcomeScreen.classList.add('hidden');
-                    mainDashboard.classList.remove('hidden');
-                }, 10000); 
+                    ui.welcomeScreen.classList.add('hidden');
+                    ui.mainDashboard.classList.remove('hidden');
+                }, 5000); 
             } else {
-                errorMessage.classList.remove('hidden');
-                passwordInput.value = '';
-                setTimeout(() => errorMessage.classList.add('hidden'), 2000);
+                ui.errorMessage.classList.remove('hidden');
+                ui.passwordInput.value = '';
+                setTimeout(() => ui.errorMessage.classList.add('hidden'), 2000);
             }
         }
 
         async function initFirebase() {
             try {
-                // User's actual and complete Firebase config
+                // This configuration is for client-side initialization
                 const firebaseConfig = {
                   apiKey: "AIzaSyCjtncOkpemPxuaEoQ6mRD_Sc99YQ-G7ig",
                   authDomain: "tanu-neet-dashboard.firebaseapp.com",
@@ -301,301 +312,219 @@
                 };
 
                 appId = firebaseConfig.projectId;
-
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
                 await signInAnonymously(auth);
-
                 userId = auth.currentUser?.uid;
-                if (!userId) {
-                    throw new Error("Authentication failed, user ID is not available.");
-                }
+                if (!userId) throw new Error("Authentication failed, user ID is not available.");
                 
-                userInfoEl.textContent = `UserID: ${userId}`;
-
+                ui.userInfoEl.textContent = `UserID: ${userId}`;
                 setupHistoryListeners();
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
                 let userErrorMessage = "Could not connect to the database. Please check your Firebase configuration and refresh.";
-                
-                if (error.code === 'auth/configuration-not-found') {
-                    userErrorMessage = "Database connection failed. <strong>Action Required:</strong> Please go to your Firebase project console, navigate to 'Authentication' > 'Sign-in method', and ensure the 'Anonymous' provider is enabled.";
-                } else if (error.message && error.message.includes('identity-toolkit-api-has-not-been-used')) {
-                     userErrorMessage = `Database connection failed because a required service is disabled. <strong>Action Required:</strong> Please click this link to enable the Identity Toolkit API for your project: <a href="https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=${firebaseConfig.projectId}" target="_blank" class="text-blue-400 underline">Enable API</a>. After enabling, wait a minute and refresh this page.`;
-                }
-
-                mainDashboard.innerHTML = `<p class="text-red-500 text-center p-8">${userErrorMessage}</p>`;
+                ui.mainDashboard.innerHTML = `<div class="p-8"><p class="text-red-500 text-center">${userErrorMessage}</p></div>`;
             }
         }
 
+        // --- API Interaction ---
+
+        async function fetchApiResponse(url, payload, options = {}) {
+            const { timeout = 60000, retries = 3, onRetryMessage } = options;
+            
+            if (geminiApiKey === "YOUR_GEMINI_API_KEY") {
+                throw new Error("Gemini API key is missing. Please add your key to the script to use AI features.");
+            }
+
+            for (let i = 0; i < retries; i++) {
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), timeout);
+
+                try {
+                    const response = await fetch(url, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload),
+                        signal: controller.signal 
+                    });
+                    
+                    clearTimeout(id);
+                    
+                    if (response.status === 503) {
+                        if (i < retries - 1) {
+                            const delay = Math.pow(2, i) * 1000; // Exponential backoff
+                            if(onRetryMessage) onRetryMessage(`AI service is busy, retrying in ${delay / 1000}s... (Attempt ${i + 2})`);
+                            await new Promise(res => setTimeout(res, delay));
+                            continue; // Go to the next iteration to retry
+                        } else {
+                            throw new Error("API request failed: The AI service is currently unavailable after multiple retries (Error 503).");
+                        }
+                    }
+                    
+                    if (response.status === 400) {
+                        throw new Error("API request failed with status 400 (Bad Request). This is often due to an invalid API key or a problem with the AI model's input.");
+                    }
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                    return await response.json(); // Success
+                } catch (error) {
+                    clearTimeout(id);
+                    if (error.name === 'AbortError') {
+                        throw new Error('The request to the AI service timed out. Please try again.');
+                    }
+                    // If it's the last retry and it still fails, or it's not a retryable error
+                    if (i === retries - 1 || response.status !== 503) {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        function safeJsonParse(jsonText) {
+            if (typeof jsonText !== 'string') {
+                if (typeof jsonText === 'object' && jsonText !== null) return jsonText;
+                throw new Error("Invalid input to safeJsonParse: not a string.");
+            }
+            try {
+                let cleanedText = jsonText.trim();
+                if (cleanedText.startsWith("```json")) {
+                    cleanedText = cleanedText.substring(7);
+                }
+                if (cleanedText.endsWith("```")) {
+                    cleanedText = cleanedText.slice(0, -3);
+                }
+                const startIndex = cleanedText.indexOf('{');
+                const endIndex = cleanedText.lastIndexOf('}');
+                if (startIndex !== -1 && endIndex !== -1) {
+                    cleanedText = cleanedText.substring(startIndex, endIndex + 1);
+                }
+                return JSON.parse(cleanedText);
+            } catch (e) {
+                console.error("JSON Parsing Error:", e, "Raw text:", jsonText);
+                throw new Error("The AI model returned an invalid JSON format. Please try again.");
+            }
+        }
+
+        // --- Feature Handlers ---
+
         async function handleSearch() {
-            const query = searchInput.value.trim();
+            const query = ui.searchInput.value.trim();
             if (!query || !userId) return;
-            resultsSection.classList.remove('hidden');
+            
+            ui.searchBtn.disabled = true;
+            ui.searchBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
+            ui.resultsSection.classList.remove('hidden');
+            ui.geminiResponseEl.innerHTML = '<p>Loading explanation from AI...</p>';
             
             try {
                 const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
-                await addDoc(searchHistoryCol, {
-                    query: query,
-                    timestamp: Date.now()
-                });
+                await addDoc(searchHistoryCol, { query, timestamp: Date.now() });
             } catch (error) {
                 console.error("Error saving search history:", error);
             }
 
-            fetchGeminiResponse(query);
-        }
-        
-        async function fetchApiResponse(url, payload) {
-            const headers = { 'Content-Type': 'application/json' };
-            try {
-                const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
-                if (!response.ok) {
-                    throw new Error(`API request failed with status ${response.status}`);
-                }
-                return await response.json();
-            } catch (error) {
-                console.error(`Error fetching from Gemini API:`, error);
-                throw error;
-            }
-        }
-
-        async function fetchGeminiResponse(query) {
-            geminiResponseEl.innerHTML = '<p>Loading structured response from Gemini...</p>';
-            const prompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null. The JSON structure should be: {"shortAnswer": "...", "detailedAnswer": "...", "derivation": "..." or null}.`;
+            const structuredPrompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null.`;
             const payload = { 
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                contents: [{ role: "user", parts: [{ text: structuredPrompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            
             try {
-                const result = await fetchApiResponse(apiUrl, payload);
+                const result = await fetchApiResponse(apiUrl, payload, { 
+                    onRetryMessage: (msg) => ui.geminiResponseEl.innerHTML = `<p>${msg}</p>` 
+                });
                 const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                const data = JSON.parse(jsonText);
-                renderStructuredResponse(geminiResponseEl, data, query);
+                if (!jsonText) throw new Error("Received an empty response from the AI service.");
+                
+                const data = safeJsonParse(jsonText);
+                renderStructuredResponse(ui.geminiResponseEl, data, query);
+
             } catch (error) {
-                geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                 ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            } finally {
+                ui.searchBtn.disabled = false;
+                ui.searchBtn.innerHTML = 'Search';
             }
         }
         
-        function renderStructuredResponse(element, data, query) {
-            if (!data || !data.shortAnswer || !data.detailedAnswer) {
-                element.innerHTML = `<p class="text-yellow-400">The response from the model was not in the expected format. Please try again.</p>`;
-                return;
-            }
-
-            let derivationHtml = '';
-            if (data.derivation) {
-                derivationHtml = `
-                    <div class="derivation-section mt-6">
-                        <h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3>
-                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
-                            ${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            element.innerHTML = `
-                <div class="response-container">
-                    <div class="flex justify-between items-center mb-6">
-                         <h3 class="text-xl font-bold text-blue-400">Quick Summary</h3>
-                         <button id="mnemonic-btn" data-concept="${query}" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md text-sm">✨ Generate Mnemonic</button>
-                    </div>
-                    <div class="bg-gray-700 p-4 rounded-lg text-gray-300">
-                        ${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
-                    </div>
-                    <div id="mnemonic-output" class="mt-4 p-4 bg-purple-900 bg-opacity-50 rounded-lg text-gray-300 hidden"></div>
-
-                    <div class="detailed-answer-section mt-6">
-                        <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
-                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
-                            ${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-                    ${derivationHtml}
-                </div>
-            `;
-            
-            document.getElementById('mnemonic-btn').addEventListener('click', handleGenerateMnemonic);
-        }
-
-        async function handleGenerateMnemonic(event) {
-            const concept = event.target.dataset.concept;
-            const outputEl = document.getElementById('mnemonic-output');
-            outputEl.classList.remove('hidden');
-            outputEl.innerHTML = 'Generating mnemonic...';
-
-            const prompt = `Create a simple and memorable mnemonic for the following NEET concept: "${concept}". The mnemonic should be easy to remember for a student.`;
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
-            try {
-                const result = await fetchApiResponse(apiUrl, payload);
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                outputEl.innerHTML = text.replace(/\*/g, '');
-            } catch (error) {
-                outputEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
-            }
-        }
-
         async function handleGenerateStudyPlan() {
-            const weeks = document.getElementById('study-weeks').value;
-            const subjects = document.getElementById('study-subjects').value;
-            studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
+            const weeks = ui.studyWeeks.value;
+            const subjects = ui.studySubjects.value;
+            ui.studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
 
-            const prompt = `You are an expert academic planner for the NEET medical entrance exam. Create a detailed, day-by-day study plan for a student for ${weeks} weeks. The student wants to focus primarily on the following subjects: ${subjects || 'all subjects (Physics, Chemistry, Botany, Zoology)'}. The plan should be realistic, including specific topics for each day, scheduled revision days, and mock test days. Format the output clearly with headings for each week and day.`;
+            const prompt = `Create a detailed, day-by-day study plan for a NEET student for ${weeks} weeks, focusing on: ${subjects || 'all subjects'}. Format it clearly.`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
             try {
-                const result = await fetchApiResponse(apiUrl, payload);
+                const result = await fetchApiResponse(apiUrl, payload, { 
+                    timeout: 90000,
+                    onRetryMessage: (msg) => ui.studyPlanOutput.innerHTML = `<p>${msg}</p>`
+                });
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                studyPlanOutput.innerHTML = text.replace(/\*/g, '');
+                ui.studyPlanOutput.innerHTML = text.replace(/\*/g, '');
             } catch (error) {
-                studyPlanOutput.innerHTML = `<p class="text-red-400">Error generating plan: ${error.message}</p>`;
+                ui.studyPlanOutput.innerHTML = `<p class="text-red-400">Error generating plan: ${error.message}</p>`;
             }
         }
 
-        function resetFullTestModal() {
-            mockTestContent.innerHTML = `
-                <div id="mock-test-instructions">
-                    <h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2>
-                    <h3 class="text-xl font-semibold mb-2">Instructions</h3>
-                    <ul class="list-disc list-inside text-gray-300 space-y-2">
-                        <li>This test contains 180 multiple-choice questions.</li>
-                        <li>Each correct answer fetches 4 marks. For each incorrect answer, 1 mark will be deducted.</li>
-                        <li>Test Duration: <strong>3 hours</strong>. The test will auto-submit when the timer ends.</li>
-                    </ul>
-                    <button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button>
-                </div>
-                <div id="mock-test-paper" class="hidden mt-6"></div>`;
-            document.getElementById('start-full-test-btn').addEventListener('click', startFullTest);
-        }
+        // --- Mock Test Logic ---
 
-        async function startFullTest(promptOverride = null) {
-            currentTestType = currentTestType || 'Full Mock Test';
-            const paper = mockTestContent.querySelector('#mock-test-paper') || (mockTestContent.innerHTML = '<div id="mock-test-paper"></div>', mockTestContent.querySelector('#mock-test-paper'));
-            const instructions = mockTestContent.querySelector('#mock-test-instructions');
-            if (instructions) instructions.classList.add('hidden');
-            paper.classList.remove('hidden');
+        async function startFullTest() {
+            currentTestType = 'Full Mock Test';
+            const paper = prepareTestUI();
             paper.innerHTML = '<p>Generating unique full test... This will take a moment.</p>';
-
-            const subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+            
             try {
-                const questionPromises = subjects.map(subject => generateQuestionsForSubject(subject, 45, paper, promptOverride));
+                const subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+                const questionPromises = subjects.map(subject => generateQuestionsForSubject(subject, 45, paper));
                 const questionSets = await Promise.all(questionPromises);
                 currentTestQuestions = questionSets.flat();
                 displayQuestions(currentTestQuestions);
                 startTimer(180);
             } catch (error) {
-                paper.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`;
+                handleTestGenerationError(paper, error);
             }
         }
 
         async function startSubjectTest(subject) {
             currentTestType = `Subject Test: ${subject}`;
-            mockTestModal.style.display = 'block';
-            mockTestContent.innerHTML = `<div id="mock-test-paper"><p>Generating unique ${subject} test...</p></div>`;
-            const paper = mockTestContent.querySelector('#mock-test-paper');
+            ui.mockTestModal.style.display = 'block';
+            const paper = prepareTestUI(true);
+            paper.innerHTML = `<p>Generating unique ${subject} test...</p>`;
             try {
                 currentTestQuestions = await generateQuestionsForSubject(subject, 45, paper);
                 displayQuestions(currentTestQuestions);
                 startTimer(45);
             } catch (error) {
-                paper.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`;
+                handleTestGenerationError(paper, error);
             }
         }
 
-        async function generateQuestionsForSubject(subject, count, paperElement, testPrompt = null) {
-            paperElement.innerHTML = `<p>Generating ${count} ${subject} questions...</p>`;
-            const prompt = testPrompt 
-                ? `${testPrompt} For the ${subject} section, generate ${count} questions.`
-                : `Generate ${count} unique, high-quality multiple-choice questions for NEET exam preparation on the subject of ${subject}. For each question, provide 4 options (A, B, C, D) and indicate the correct answer letter. Format the output as a valid JSON array of objects, where each object has keys: "question", "options" (an array of 4 strings), "answer" (a string like "A", "B", "C", or "D"), and "subject" (string: "${subject}").`;
-            
+        async function generateQuestionsForSubject(subject, count, paperElement) {
+            const prompt = `Generate ${count} unique, high-quality multiple-choice questions for NEET exam preparation on the subject of ${subject}. Format as a valid JSON array of objects, with keys: "question", "options" (array of 4 strings), "answer" (string "A", "B", "C", or "D"), and "subject" ("${subject}").`;
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             };
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-            const result = await fetchApiResponse(url, payload);
-            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            return JSON.parse(jsonText);
-        }
-        
-        function startTimer(durationInMinutes) {
-            clearInterval(timerInterval);
-            testStartTime = Date.now();
-            const endTime = testStartTime + durationInMinutes * 60 * 1000;
-            const timerDisplay = document.getElementById('timer-display');
-            if (timerDisplay) timerDisplay.classList.remove('hidden');
-
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const distance = endTime - now;
-                const timerDisplay = document.getElementById('timer-display');
-
-                if (distance < 0) {
-                    clearInterval(timerInterval);
-                    if (timerDisplay) timerDisplay.innerHTML = "Time's Up!";
-                    document.getElementById('submit-test-btn')?.click(); // Auto-submit
-                    return;
-                }
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                if (timerDisplay) timerDisplay.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }, 1000);
-        }
-
-        function displayQuestions(questions) {
-            const paper = mockTestContent.querySelector('#mock-test-paper');
-            let questionsHtml = `
-                <div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold">${currentTestType}</h2>
-                    <div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div>
-                </div>`;
-            let currentSubject = '';
-            questions.forEach((q, index) => {
-                if(q.subject !== currentSubject) {
-                    currentSubject = q.subject;
-                    questionsHtml += `<h3 class="text-xl font-bold mt-6 mb-4 text-red-500">${currentSubject}</h3>`;
-                }
-                questionsHtml += `
-                    <div class="mb-6">
-                        <p class="font-semibold">${index + 1}. ${q.question}</p>
-                        <div class="mt-2 space-y-2" id="q-${index}">
-                            ${q.options.map((opt, i) => `
-                                <div>
-                                    <input type="radio" id="q${index}opt${i}" name="q${index}" value="${String.fromCharCode(65 + i)}">
-                                    <label for="q${index}opt${i}" class="ml-2">${String.fromCharCode(65 + i)}) ${opt}</label>
-                                </div>`).join('')}
-                        </div>
-                    </div>`;
+            const result = await fetchApiResponse(url, payload, { 
+                onRetryMessage: (msg) => paperElement.innerHTML = `<p>${msg}</p>` 
             });
-            questionsHtml += `<button id="submit-test-btn" class="mt-8 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Submit Test</button>`;
-            paper.innerHTML = questionsHtml;
-
-            document.getElementById('submit-test-btn').addEventListener('click', handleSubmitTest);
+            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!jsonText) throw new Error("Received empty question set from AI.");
+            return safeJsonParse(jsonText);
         }
 
         async function handleSubmitTest() {
             clearInterval(timerInterval);
             const timeTakenMs = Date.now() - testStartTime;
-            const totalSeconds = Math.floor(timeTakenMs / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            const timeTakenFormatted = `${minutes}m ${seconds}s`;
-
-            let score = 0;
-            let correctCount = 0;
-            let incorrectCount = 0;
-            let unattemptedCount = 0;
+            let score = 0, correctCount = 0, incorrectCount = 0, unattemptedCount = 0;
             const userAnswers = [];
 
             currentTestQuestions.forEach((q, index) => {
@@ -603,13 +532,8 @@
                 const answer = selected ? selected.value : null;
                 userAnswers.push(answer);
                 if (answer) {
-                    if (answer === q.answer) {
-                        score += 4;
-                        correctCount++;
-                    } else {
-                        score -= 1;
-                        incorrectCount++;
-                    }
+                    if (answer === q.answer) { score += 4; correctCount++; } 
+                    else { score -= 1; incorrectCount++; }
                 } else {
                     unattemptedCount++;
                 }
@@ -618,234 +542,188 @@
             const testResult = {
                 timestamp: Date.now(),
                 type: currentTestType,
-                timeTaken: timeTakenFormatted,
+                timeTaken: formatTime(timeTakenMs),
                 score, correctCount, incorrectCount, unattemptedCount,
                 questions: JSON.stringify(currentTestQuestions), 
                 userAnswers: JSON.stringify(userAnswers)
             };
             
             try {
-                const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
-                await addDoc(mockTestCol, testResult);
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`), testResult);
             } catch(error) {
                 console.error("Error saving mock test result:", error);
             }
 
-            displayResults({ 
-                ...testResult, 
-                questions: currentTestQuestions, 
-                userAnswers: JSON.parse(testResult.userAnswers) 
+            displayResults({ ...testResult, questions: currentTestQuestions, userAnswers });
+        }
+
+        // --- UI Rendering & Updates ---
+
+        function renderStructuredResponse(element, data, query) {
+            if (!data || !data.shortAnswer || !data.detailedAnswer) {
+                element.innerHTML = `<p class="text-yellow-400">The response from the model was not in the expected format. Please try again.</p>`;
+                return;
+            }
+            const derivationHtml = data.derivation ? `
+                <div class="mt-6">
+                    <h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3>
+                    <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                </div>` : '';
+            element.innerHTML = `
+                <h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3>
+                <div class="bg-gray-700 p-4 rounded-lg text-gray-300">${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                <div class="mt-6">
+                    <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
+                    <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
+                </div>
+                ${derivationHtml}`;
+        }
+
+        function resetFullTestModal() {
+            ui.mockTestContent.innerHTML = `
+                <div id="mock-test-instructions">
+                    <h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>180 multiple-choice questions.</li>
+                        <li>+4 for correct, -1 for incorrect.</li>
+                        <li>Duration: <strong>3 hours</strong>.</li>
+                    </ul>
+                    <button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button>
+                </div>
+                <div id="mock-test-paper" class="hidden mt-6"></div>`;
+            document.getElementById('start-full-test-btn').addEventListener('click', startFullTest);
+        }
+
+        function prepareTestUI(isSubjectTest = false) {
+            if (isSubjectTest) {
+                ui.mockTestContent.innerHTML = '<div id="mock-test-paper"></div>';
+            } else {
+                const instructions = ui.mockTestContent.querySelector('#mock-test-instructions');
+                if (instructions) instructions.classList.add('hidden');
+            }
+            const paper = ui.mockTestContent.querySelector('#mock-test-paper');
+            paper.classList.remove('hidden');
+            return paper;
+        }
+
+        function handleTestGenerationError(paperElement, error) {
+            let errorMessage = `Failed to generate the test: ${error.message}. Please try again.`;
+            paperElement.innerHTML = `<p class="text-red-400">${errorMessage}</p>`;
+        }
+
+        function displayQuestions(questions) {
+            const paper = ui.mockTestContent.querySelector('#mock-test-paper');
+            let questionsHtml = `<div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4">
+                                    <h2 class="text-2xl font-bold">${currentTestType}</h2>
+                                    <div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div>
+                                </div>`;
+            questions.forEach((q, index) => {
+                questionsHtml += `<div class="mb-6"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2" id="q-${index}">
+                    ${q.options.map((opt, i) => `<div><input type="radio" id="q${index}opt${i}" name="q${index}" value="${String.fromCharCode(65 + i)}"><label for="q${index}opt${i}" class="ml-2">${String.fromCharCode(65 + i)}) ${opt}</label></div>`).join('')}
+                </div></div>`;
             });
+            questionsHtml += `<button id="submit-test-btn" class="mt-8 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Submit Test</button>`;
+            paper.innerHTML = questionsHtml;
+            document.getElementById('submit-test-btn').addEventListener('click', handleSubmitTest);
         }
 
         function displayResults(result) {
-            const questions = typeof result.questions === 'string' ? JSON.parse(result.questions) : result.questions;
-            const userAnswers = typeof result.userAnswers === 'string' ? JSON.parse(result.userAnswers) : result.userAnswers;
-
-            let resultsHtml = `
-                <div id="results-summary">
-                    <h2 class="text-3xl font-bold mb-4">${result.type} - Results</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
-                        <div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Total Score</p></div>
-                        <div class="bg-green-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.correctCount}</p><p>Correct</p></div>
-                        <div class="bg-red-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.incorrectCount}</p><p>Incorrect</p></div>
-                        <div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div>
-                    </div>
-                    <p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>
-                    <h3 class="text-2xl font-bold mb-4">Review Answers</h3>
-                     <button id="explain-all-btn" class="mb-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All Questions</button>
-                     <div id="explanations-container"></div>
-                </div>`;
+            const questions = safeJsonParse(result.questions);
+            const userAnswers = safeJsonParse(result.userAnswers);
+            let resultsHtml = `<h2 class="text-3xl font-bold mb-4">${result.type} - Results</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
+                    <div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Score</p></div>
+                    <div class="bg-green-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.correctCount}</p><p>Correct</p></div>
+                    <div class="bg-red-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.incorrectCount}</p><p>Incorrect</p></div>
+                    <div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div>
+                </div>
+                <p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>
+                <h3 class="text-2xl font-bold mb-4">Review Answers</h3>`;
             
-            let currentSubject = '';
             questions.forEach((q, index) => {
-                if(q.subject !== currentSubject) {
-                    currentSubject = q.subject;
-                    resultsHtml += `<h3 class="text-xl font-bold mt-6 mb-4 text-red-500">${currentSubject}</h3>`;
-                }
                 const userAnswer = userAnswers[index];
-                let optionsHtml = '';
-                q.options.forEach((opt, i) => {
+                let optionsHtml = q.options.map((opt, i) => {
                     const optionLetter = String.fromCharCode(65 + i);
                     let labelClass = '';
-                    if (optionLetter === q.answer) {
-                        labelClass = 'correct-answer';
-                    } else if (optionLetter === userAnswer) {
-                        labelClass = 'incorrect-answer';
-                    }
-                    optionsHtml += `<div><label class="ml-2 ${labelClass}">${optionLetter}) ${opt}</label></div>`;
-                });
-
-                let mistakeButtonHtml = '';
-                if (userAnswer && userAnswer !== q.answer) {
-                    mistakeButtonHtml = `<button class="explain-mistake-btn mt-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded-md text-sm" data-question-index="${index}">✨ Explain My Mistake</button>`;
-                }
-
-                resultsHtml += `
-                    <div class="mb-6 p-4 bg-gray-800 rounded-lg">
-                        <p class="font-semibold">${index + 1}. ${q.question}</p>
-                        <div class="mt-2 space-y-2">${optionsHtml}</div>
-                        <p class="mt-2 text-sm">Your Answer: ${userAnswer || 'Not Answered'}</p>
-                        ${mistakeButtonHtml}
-                        <div id="mistake-explanation-${index}" class="mt-2 text-sm text-yellow-200"></div>
-                    </div>`;
+                    if (optionLetter === q.answer) labelClass = 'correct-answer';
+                    else if (optionLetter === userAnswer) labelClass = 'incorrect-answer';
+                    return `<div><label class="ml-2 ${labelClass}">${optionLetter}) ${opt}</label></div>`;
+                }).join('');
+                resultsHtml += `<div class="mb-6 p-4 bg-gray-800 rounded-lg"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2">${optionsHtml}</div></div>`;
             });
-            
-            mockTestContent.innerHTML = resultsHtml;
-            document.getElementById('explain-all-btn').addEventListener('click', () => generateAllExplanations({ ...result, questions, userAnswers }));
-            document.querySelectorAll('.explain-mistake-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const questionIndex = e.target.dataset.questionIndex;
-                    const question = questions[questionIndex];
-                    const userAnswer = userAnswers[questionIndex];
-                    getMistakeExplanation(question, userAnswer, `mistake-explanation-${questionIndex}`);
-                });
-            });
+            ui.mockTestContent.innerHTML = resultsHtml;
         }
         
-        async function getMistakeExplanation(question, userAnswer, elementId) {
-            const explanationEl = document.getElementById(elementId);
-            explanationEl.innerHTML = 'Loading explanation...';
-            const prompt = `I am a NEET aspirant. For the following multiple-choice question, I chose answer '${userAnswer}' but the correct answer is '${question.answer}'. Please explain why my answer is incorrect and clarify the concept. Question: ${question.question}. Options: ${question.options.join(', ')}.`;
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-            try {
-                const result = await fetchApiResponse(url, payload);
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                explanationEl.innerHTML = text ? text.replace(/\*/g, '').replace(/\n/g, '<br>') : '<p>Could not load explanation.</p>';
-            } catch (error) {
-                explanationEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
-            }
-        }
-
-        async function generateAllExplanations(result) {
-            const container = document.getElementById('explanations-container');
-            container.innerHTML = `<p class="text-center">Generating explanations... This may take some time.</p>`;
-            
-            const prompt = `Provide a detailed, step-by-step explanation for each of the following NEET questions. Here is the JSON data of the questions and their correct answers: ${JSON.stringify(result.questions)}. Return a valid JSON array of strings, where each string is the explanation for the corresponding question in the input array.`;
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
-             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
-            try {
-                const apiResult = await fetchApiResponse(url, payload);
-                const explanations = JSON.parse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
-                
-                const testDocRef = doc(db, `artifacts/${appId}/users/${userId}/mockTestHistory`, result.id);
-                await setDoc(testDocRef, { explanations: JSON.stringify(explanations) }, { merge: true });
-
-                let explanationsHtml = '<h3 class="text-2xl font-bold mt-8 mb-4">Explanations</h3>';
-                result.questions.forEach((q, index) => {
-                    explanationsHtml += `
-                        <div class="mb-4 p-4 bg-gray-900 rounded-lg">
-                            <p class="font-semibold">${index + 1}. ${q.question}</p>
-                            <p class="mt-2 text-green-400">Correct Answer: ${q.answer}</p>
-                            <div class="mt-2 text-gray-300">${explanations[index].replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                        </div>`;
-                });
-                container.innerHTML = explanationsHtml;
-
-            } catch (error) {
-                container.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
-            }
-        }
-
         function setupHistoryListeners() {
             if (!userId) return;
-
             const mockTestCol = collection(db, `artifacts/${appId}/users/${userId}/mockTestHistory`);
-            const qMockTests = query(mockTestCol);
-            unsubscribeMockTests = onSnapshot(qMockTests, (snapshot) => {
+            unsubscribeMockTests = onSnapshot(query(mockTestCol), (snapshot) => {
                 mockTestHistory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderHistory();
-            }, (error) => {
-                console.error("Error listening to mock test history:", error);
-                mockTestTracker.innerHTML = '<p class="text-red-400">Could not load test history.</p>';
             });
-
             const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
-            const qSearch = query(searchHistoryCol);
-            unsubscribeSearchHistory = onSnapshot(qSearch, (snapshot) => {
-                searchHistoryList.innerHTML = '';
-                const searches = snapshot.docs.map(doc => doc.data());
-                searches.sort((a,b) => b.timestamp - a.timestamp); 
+            unsubscribeSearchHistory = onSnapshot(query(searchHistoryCol), (snapshot) => {
+                ui.searchHistoryList.innerHTML = '';
+                const searches = snapshot.docs.map(doc => doc.data()).sort((a,b) => b.timestamp - a.timestamp); 
                 searches.forEach(search => {
                     const li = document.createElement('li');
                     li.textContent = search.query;
-                    searchHistoryList.appendChild(li);
+                    ui.searchHistoryList.appendChild(li);
                 });
-            }, (error) => {
-                console.error("Error listening to search history:", error);
-                searchHistoryList.innerHTML = '<li>Could not load search history.</li>';
             });
         }
-
 
         function renderHistory() {
-            mockTestTracker.innerHTML = '';
+            ui.mockTestTracker.innerHTML = '';
             if (!mockTestHistory || mockTestHistory.length === 0) {
-                 mockTestTracker.innerHTML = '<p class="text-gray-400">No mock tests taken yet.</p>';
+                 ui.mockTestTracker.innerHTML = '<p class="text-gray-400">No mock tests taken yet.</p>';
                  return;
             }
-
-            const groupedByDate = mockTestHistory.reduce((acc, result) => {
-                const date = new Date(result.timestamp).toLocaleDateString('en-CA'); 
-                if (!acc[date]) {
-                    acc[date] = [];
-                }
-                acc[date].push(result);
-                return acc;
-            }, {});
-
-            const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-
-            sortedDates.forEach(dateStr => {
-                const dateHeading = document.createElement('h3');
-                dateHeading.className = 'text-lg font-semibold mt-4 mb-2 text-gray-400';
-                
-                const today = new Date();
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                
-                const recordDate = new Date(dateStr);
-
-                if (recordDate.toDateString() === today.toDateString()) {
-                    dateHeading.textContent = 'Today';
-                } else if (recordDate.toDateString() === yesterday.toDateString()) {
-                    dateHeading.textContent = 'Yesterday';
-                } else {
-                    dateHeading.textContent = recordDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                }
-
-                mockTestTracker.appendChild(dateHeading);
-
-                const testsForDate = groupedByDate[dateStr];
-                testsForDate.sort((a, b) => b.timestamp - a.timestamp);
-
-                testsForDate.forEach(result => {
-                    const record = document.createElement('div');
-                    record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
-                    const testTime = new Date(result.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-
-                    record.innerHTML = `
-                        <div>
-                            <p class="font-bold">${result.type} at ${testTime}</p>
-                            <p>Score: ${result.score}</p>
-                            <p>Time Taken: ${result.timeTaken || 'N/A'}</p>
-                        </div>
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">View Results</button>
-                    `;
-                    record.querySelector('button').addEventListener('click', () => {
-                        historyModal.style.display = 'none';
-                        mockTestModal.style.display = 'block';
-                        displayResults(result);
-                    });
-                    mockTestTracker.appendChild(record);
+            mockTestHistory.sort((a,b) => b.timestamp - a.timestamp).forEach(result => {
+                const record = document.createElement('div');
+                record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
+                record.innerHTML = `<div><p class="font-bold">${result.type}</p><p>Score: ${result.score}</p></div>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">View</button>`;
+                record.querySelector('button').addEventListener('click', () => {
+                    ui.historyModal.style.display = 'none';
+                    ui.mockTestModal.style.display = 'block';
+                    displayResults(result);
                 });
+                ui.mockTestTracker.appendChild(record);
             });
         }
+
+        // --- Utility Functions ---
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}m ${seconds}s`;
+        }
+        
+        function startTimer(durationInMinutes) {
+            clearInterval(timerInterval);
+            testStartTime = Date.now();
+            const endTime = testStartTime + durationInMinutes * 60 * 1000;
+            timerInterval = setInterval(() => {
+                const distance = endTime - Date.now();
+                const timerDisplay = document.getElementById('timer-display');
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    if (timerDisplay) timerDisplay.innerHTML = "Time's Up!";
+                    document.getElementById('submit-test-btn')?.click();
+                    return;
+                }
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                if (timerDisplay) timerDisplay.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // --- Initializer ---
+        setupEventListeners();
+
     </script>
 </body>
 </html>
