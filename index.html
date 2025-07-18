@@ -157,7 +157,7 @@
             <div class="aurora-element"></div>
         </div>
         <div class="glassmorphism-box p-8 rounded-xl shadow-2xl text-center w-full max-w-sm">
-            <h1 class="text-3xl font-bold mb-4">Thanu's Prep Dashboard</h1>
+            <h1 class="text-3xl font-bold mb-4">Thanu – Unlock to Learn More</h1>
             <p class="text-gray-400 mb-6">Enter Passcode</p>
             <input type="password" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center tracking-widest text-2xl border-2 border-transparent transition-all duration-300" maxlength="8">
             <p id="error-message" class="text-red-500 mt-4 hidden">Incorrect Passcode</p>
@@ -199,11 +199,20 @@
                     <button id="mic-btn" class="absolute inset-y-0 left-0 pl-4 flex items-center cursor-pointer">
                         <svg class="h-6 w-6 text-gray-400 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                     </button>
-                    <input type="text" id="search-input" class="w-full bg-gray-800 text-white p-4 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-red-500 pl-14 pr-10">
+                    <input type="text" id="search-input" class="w-full bg-gray-800 text-white p-4 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-red-500 pl-14 pr-24">
+                    
+                    <input type="file" id="file-upload-input" class="hidden" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                    <button id="upload-btn" class="absolute inset-y-0 right-0 pr-14 flex items-center cursor-pointer">
+                        <svg class="h-6 w-6 text-gray-400 hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" />
+                        </svg>
+                    </button>
+                    
                     <button id="clear-search-btn" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer hidden">
                         <svg class="h-6 w-6 text-gray-500 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
+                <div id="file-display-area" class="mt-3 text-center hidden"></div>
                  <button id="search-btn" class="w-full md:w-auto mt-4 tlearn-red hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full text-lg">Search</button>
             </div>
             
@@ -263,7 +272,6 @@
         </div>
     </div>
 
-    <!-- NEW: Chapter-wise Test Modal -->
     <div id="chapter-test-modal" class="modal">
         <div class="modal-content">
             <span id="close-chapter-test" class="close">&times;</span>
@@ -289,7 +297,6 @@
         </div>
     </div>
 
-    <!-- NEW: Chapter-wise Explanation Modal -->
     <div id="chapter-explanation-modal" class="modal">
         <div class="modal-content">
             <span id="close-chapter-explanation" class="close">&times;</span>
@@ -335,6 +342,7 @@
         let testStartTime = 0;
         let currentTestType = '';
         let lastGreetingIndex = -1;
+        let uploadedFileContent = null;
 
         // --- IMPORTANT: API KEY MANAGEMENT ---
         const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do"; 
@@ -352,11 +360,14 @@
             searchInput: document.getElementById('search-input'),
             clearSearchBtn: document.getElementById('clear-search-btn'),
             micBtn: document.getElementById('mic-btn'),
+            uploadBtn: document.getElementById('upload-btn'),
+            fileUploadInput: document.getElementById('file-upload-input'),
+            fileDisplayArea: document.getElementById('file-display-area'),
             resultsSection: document.getElementById('results-section'),
             geminiResponseEl: document.getElementById('gemini-response'),
             mockTestBtn: document.getElementById('mock-test-btn'),
             subjectTestBtn: document.getElementById('subject-test-btn'),
-            historyBtn: document.getElementById('icon-history-btn'), // Changed to new icon button
+            historyBtn: document.getElementById('icon-history-btn'),
             studyPlanBtn: document.getElementById('study-plan-btn'),
             chapterTestBtn: document.getElementById('chapter-test-btn'),
             chapterExpBtn: document.getElementById('chapter-exp-btn'),
@@ -390,7 +401,6 @@
             getExplanationBtn: document.getElementById('get-explanation-btn'),
         };
 
-        // NEW: Special greetings for Thanu
         const specialGreetings = [
             { main: "Welcome, Thanu!", sub: "Ready to show those MCQs who's boss?" },
             { main: "Hello, Superstar!", sub: "Another day, another step closer to that white coat." },
@@ -399,7 +409,6 @@
             { main: "It's a great day to study!", sub: "Let's make some magic happen, Thanu." }
         ];
 
-        // NEW: Comprehensive Syllabus Data
         const syllabus = {
             "1st Year": {
                 "Physics": ["Units and Measurements", "Motion in a Straight Line", "Motion in a Plane", "Laws of Motion", "Work, Energy and Power", "System of Particles and Rotational Motion", "Gravitation", "Mechanical Properties of Solids", "Mechanical Properties of Fluids", "Thermal Properties of Matter", "Thermodynamics", "Kinetic Theory", "Oscillations", "Waves"],
@@ -422,14 +431,16 @@
             });
             ui.searchBtn.addEventListener('click', handleSearch);
             
-            // Search input listeners for clear button and mic
             ui.searchInput.addEventListener('input', () => {
-                ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value === '');
+                const hasText = ui.searchInput.value.trim() !== '';
+                const hasFile = uploadedFileContent !== null;
+                ui.clearSearchBtn.classList.toggle('hidden', !hasText && !hasFile);
             });
             ui.clearSearchBtn.addEventListener('click', handleClearSearch);
             ui.micBtn.addEventListener('click', handleVoiceSearch);
+            ui.uploadBtn.addEventListener('click', () => ui.fileUploadInput.click());
+            ui.fileUploadInput.addEventListener('change', handleFileUpload);
 
-            // Action Card / Button listeners
             ui.mockTestBtn.addEventListener('click', () => {
                 resetFullTestModal();
                 ui.mockTestModal.style.display = 'block';
@@ -446,13 +457,11 @@
             ui.studyPlanBtn.addEventListener('click', () => ui.studyPlanModal.style.display = 'block');
             ui.generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
             
-            // New Chapter-wise buttons
             ui.chapterTestBtn.addEventListener('click', () => ui.chapterTestModal.style.display = 'block');
             ui.chapterExpBtn.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'block');
             ui.startChapterTestBtn.addEventListener('click', startChapterTest);
             ui.getExplanationBtn.addEventListener('click', handleChapterExplanation);
 
-            // Modal close buttons
             ui.closeMockTest.addEventListener('click', () => ui.mockTestModal.style.display = 'none');
             ui.closeSubjectTest.addEventListener('click', () => ui.subjectTestModal.style.display = 'none');
             ui.closeHistory.addEventListener('click', () => ui.historyModal.style.display = 'none');
@@ -460,7 +469,6 @@
             ui.closeChapterTest.addEventListener('click', () => ui.chapterTestModal.style.display = 'none');
             ui.closeChapterExplanation.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'none');
             
-            // Close modal on outside click
             window.addEventListener('click', (event) => {
                 const modals = [ui.mockTestModal, ui.historyModal, ui.subjectTestModal, ui.studyPlanModal, ui.chapterTestModal, ui.chapterExplanationModal];
                 modals.forEach(modal => {
@@ -468,7 +476,6 @@
                 });
             });
 
-            // Dynamic filter listeners
             ui.chapterTestYear.addEventListener('change', () => populateFilters('chapter-test'));
             ui.chapterTestSubject.addEventListener('change', () => populateFilters('chapter-test'));
             ui.chapterExpYear.addEventListener('change', () => populateFilters('chapter-exp'));
@@ -476,7 +483,6 @@
         }
 
         // --- Core Application Logic ---
-
         function getPersonalizedGreeting() {
             let newIndex;
             do {
@@ -504,7 +510,7 @@
                     ui.mainDashboard.classList.remove('hidden');
                     populateFilters('chapter-test');
                     populateFilters('chapter-exp');
-                }, 20000); // Increased to 20 seconds
+                }, 4000);
             } else {
                 ui.errorMessage.classList.remove('hidden');
                 ui.passwordInput.value = '';
@@ -514,7 +520,6 @@
 
         async function initFirebase() {
             try {
-                // This configuration is for client-side initialization
                 const firebaseConfig = {
                   apiKey: "AIzaSyCjtncOkpemPxuaEoQ6mRD_Sc99YQ-G7ig",
                   authDomain: "tanu-neet-dashboard.firebaseapp.com",
@@ -544,9 +549,8 @@
         }
 
         // --- API Interaction ---
-
         async function fetchApiResponse(url, payload, options = {}) {
-            const { timeout = 60000, retries = 3, onRetryMessage } = options;
+            const { timeout = 120000, retries = 3, onRetryMessage } = options;
             
             if (geminiApiKey === "YOUR_GEMINI_API_KEY") {
                 throw new Error("Gemini API key is missing. Please add your key to the script to use AI features.");
@@ -567,26 +571,18 @@
                     
                     clearTimeout(id);
                     
-                    if (response.status === 503) {
-                        throw new Error("API service is currently unavailable (503).");
-                    }
-                    
-                    if (response.status === 400) {
-                        throw new Error("API request failed with status 400 (Bad Request). This is often due to an invalid API key or a problem with the AI model's input.");
-                    }
                     if (!response.ok) {
                         throw new Error(`API request failed with status ${response.status}`);
                     }
-                    return await response.json(); // Success
+                    return await response.json();
                 } catch (error) {
                     lastError = error;
                     if (error.name === 'AbortError') {
                         throw new Error('The request to the AI service timed out. Please try again.');
                     }
-                    
-                    if (i < retries - 1 && error.message && error.message.includes("503")) {
+                    if (i < retries - 1) {
                         const delay = Math.pow(2, i) * 1000;
-                        if(onRetryMessage) onRetryMessage(`AI service is busy, retrying in ${delay / 1000}s... (Attempt ${i + 2})`);
+                        if(onRetryMessage) onRetryMessage(`AI service is busy, retrying in ${delay / 1000}s...`);
                         await new Promise(res => setTimeout(res, delay));
                     } else {
                         throw lastError;
@@ -598,127 +594,140 @@
         function safeJsonParse(jsonText) {
             if (typeof jsonText !== 'string') {
                 if (typeof jsonText === 'object' && jsonText !== null) return jsonText;
-                throw new Error("Invalid input to safeJsonParse: not a string.");
+                return null;
             }
             try {
                 let cleanedText = jsonText.trim();
-                
                 if (cleanedText.startsWith("```json")) {
                     cleanedText = cleanedText.substring(7).trim();
                 }
                 if (cleanedText.endsWith("```")) {
                     cleanedText = cleanedText.slice(0, -3).trim();
                 }
-
-                const firstChar = cleanedText.charAt(0);
-                const lastChar = cleanedText.charAt(cleanedText.length - 1);
-
-                if ((firstChar === '{' && lastChar === '}') || (firstChar === '[' && lastChar === ']')) {
-                    return JSON.parse(cleanedText);
-                }
-                
-                const startIndex = cleanedText.indexOf('[');
-                const startIndexObj = cleanedText.indexOf('{');
-
-                if (startIndex === -1 && startIndexObj === -1) {
-                    throw new Error("No JSON object or array found in the response.");
-                }
-
-                let finalJsonText;
-                if (startIndex !== -1 && (startIndex < startIndexObj || startIndexObj === -1)) {
-                    const endIndex = cleanedText.lastIndexOf(']');
-                    if (endIndex > startIndex) {
-                        finalJsonText = cleanedText.substring(startIndex, endIndex + 1);
-                    }
-                } else if (startIndexObj !== -1) {
-                    const endIndex = cleanedText.lastIndexOf('}');
-                    if (endIndex > startIndexObj) {
-                        finalJsonText = cleanedText.substring(startIndexObj, endIndex + 1);
-                    }
-                }
-
-                if (!finalJsonText) {
-                    throw new Error("Could not extract a valid JSON structure from the response.");
-                }
-
-                return JSON.parse(finalJsonText);
+                return JSON.parse(cleanedText);
             } catch (e) {
-                console.error("JSON Parsing Error:", e, "Raw text:", jsonText);
-                throw new Error("The AI model returned an invalid JSON format. Please try again.");
+                return null;
             }
         }
 
         // --- Feature Handlers ---
+        function clearFile() {
+            uploadedFileContent = null;
+            ui.fileDisplayArea.classList.add('hidden');
+            ui.fileDisplayArea.innerHTML = '';
+            ui.fileUploadInput.value = ''; // Reset file input
+            ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value.trim() === '');
+        }
 
         function handleClearSearch() {
             ui.searchInput.value = '';
             ui.geminiResponseEl.innerHTML = '';
             ui.resultsSection.classList.add('hidden');
-            ui.clearSearchBtn.classList.add('hidden');
+            clearFile();
         }
 
         function handleVoiceSearch() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("Sorry, your browser doesn't support voice recognition.");
+                console.warn("Browser doesn't support voice recognition.");
                 return;
             }
-
             const recognition = new SpeechRecognition();
             recognition.lang = 'en-US';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
             ui.micBtn.classList.add('mic-listening');
-
+            const recognitionTimeout = setTimeout(() => recognition.stop(), 6000);
             recognition.onresult = (event) => {
-                const speechResult = event.results[0][0].transcript;
-                ui.searchInput.value = speechResult;
+                ui.searchInput.value = event.results[0][0].transcript;
                 ui.clearSearchBtn.classList.remove('hidden');
-                handleSearch(); // Automatically search after speech
+                handleSearch();
             };
-
-            recognition.onspeechend = () => {
-                recognition.stop();
+            recognition.onend = () => {
+                clearTimeout(recognitionTimeout);
                 ui.micBtn.classList.remove('mic-listening');
             };
-
-            recognition.onerror = (event) => {
-                alert(`Error occurred in recognition: ${event.error}`);
-                ui.micBtn.classList.remove('mic-listening');
-            };
-            
+            recognition.onerror = (event) => console.error(`Recognition error: ${event.error}`);
             recognition.start();
         }
+        
+        // MODIFIED: Function to handle all file types
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedFileContent = {
+                    name: file.name,
+                    mimeType: file.type,
+                    data: e.target.result // base64 data URL
+                };
+                
+                ui.fileDisplayArea.innerHTML = `
+                    <span class="bg-gray-600 text-sm py-1 px-3 rounded-full inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" /></svg>
+                        <span>${file.name}</span>
+                        <button id="clear-file-btn" class="text-gray-300 hover:text-white font-bold">&times;</button>
+                    </span>`;
+                ui.fileDisplayArea.classList.remove('hidden');
+                ui.clearSearchBtn.classList.remove('hidden');
+                document.getElementById('clear-file-btn').addEventListener('click', clearFile);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // MODIFIED: Function to handle search with file analysis
         async function handleSearch() {
             const query = ui.searchInput.value.trim();
-            if (!query || !userId) return;
+            if ((!query && !uploadedFileContent) || !userId) return;
             
             ui.searchBtn.disabled = true;
             ui.searchBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
             ui.resultsSection.classList.remove('hidden');
-            ui.geminiResponseEl.innerHTML = '<p>Loading explanation from AI...</p>';
-            
-            const structuredPrompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If the concept is from Physics or Chemistry and involves a formula or principle that can be derived, also include a "derivation" key with the step-by-step derivation. If no derivation is applicable, set "derivation" to null.`;
-            const payload = { 
-                contents: [{ role: "user", parts: [{ text: structuredPrompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
+            ui.geminiResponseEl.innerHTML = '<p>Analyzing with AI...</p>';
+
+            let payload;
+            let useJsonResponse = false;
+
+            if (uploadedFileContent) {
+                const parts = [
+                    { text: query || `Analyze the attached file: ${uploadedFileContent.name}` },
+                    { 
+                        inlineData: { 
+                            mimeType: uploadedFileContent.mimeType, 
+                            data: uploadedFileContent.data.split(',')[1]
+                        } 
+                    }
+                ];
+                payload = { contents: [{ role: "user", parts }] };
+            } else {
+                const structuredPrompt = `For the NEET concept "${query}", provide a response as a valid JSON object. The object must have "shortAnswer" (2-3 sentences) and "detailedAnswer". If it involves a formula, include a "derivation" key. If not applicable, set "derivation" to null.`;
+                payload = { 
+                    contents: [{ role: "user", parts: [{ text: structuredPrompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+                useJsonResponse = true;
+            }
+
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
             
             try {
-                const result = await fetchApiResponse(apiUrl, payload, { 
-                    onRetryMessage: (msg) => ui.geminiResponseEl.innerHTML = `<p>${msg}</p>` 
-                });
-                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!jsonText) throw new Error("Received an empty response from the AI service.");
+                const result = await fetchApiResponse(apiUrl, payload);
+                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!responseText) throw new Error("Received an empty response from the AI.");
                 
-                const data = safeJsonParse(jsonText);
-                renderStructuredResponse(ui.geminiResponseEl, data, query);
+                let data;
+                if (useJsonResponse) {
+                    data = safeJsonParse(responseText);
+                }
                 
-                // Save to history
-                const historyData = { type: 'search', query, response: JSON.stringify(data), timestamp: Date.now() };
+                if (data) {
+                    renderStructuredResponse(ui.geminiResponseEl, data, query);
+                } else {
+                    renderStructuredResponse(ui.geminiResponseEl, { detailedAnswer: responseText }, query);
+                }
+                
+                const historyQuery = uploadedFileContent ? `${query} (file: ${uploadedFileContent.name})` : query;
+                const historyData = { type: 'search', query: historyQuery, response: responseText, timestamp: Date.now() };
                 await addDoc(collection(db, `artifacts/${appId}/users/${userId}/searchHistory`), historyData);
 
             } catch (error) {
@@ -733,16 +742,11 @@
             const weeks = ui.studyWeeks.value;
             const subjects = ui.studySubjects.value;
             ui.studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
-
             const prompt = `Create a detailed, day-by-day study plan for a student for ${weeks} weeks, focusing on: ${subjects || 'all subjects'}. Format it clearly.`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
             try {
-                const result = await fetchApiResponse(apiUrl, payload, { 
-                    timeout: 90000,
-                    onRetryMessage: (msg) => ui.studyPlanOutput.innerHTML = `<p>${msg}</p>`
-                });
+                const result = await fetchApiResponse(apiUrl, payload, { timeout: 90000 });
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 ui.studyPlanOutput.innerHTML = text.replace(/\*/g, '');
             } catch (error) {
@@ -756,44 +760,32 @@
             const chapter = ui.chapterExpChapter.value;
             const topic = ui.chapterExpTopic.value.trim();
             const query = topic ? `${topic} from the chapter ${chapter}` : `the chapter ${chapter}`;
-
             ui.chapterExplanationModal.style.display = 'none';
             ui.resultsSection.classList.remove('hidden');
             ui.geminiResponseEl.innerHTML = `<p>Loading explanation for ${query}...</p>`;
-
-            const prompt = `Provide a detailed explanation for the NEET topic: "${query}". If the concept is visual (e.g., cell structure, a physics diagram, a chemical reaction mechanism), please include a simplified SVG diagram string within the JSON response. The JSON object must have keys: "topic" (string), "explanation" (string), and "svgDiagram" (string, or null if not applicable).`;
+            const prompt = `Provide a detailed explanation for the NEET topic: "${query}". If the concept is visual, include a simplified SVG diagram string in the JSON response. The JSON object must have keys: "topic", "explanation", and "svgDiagram" (string, or null).`;
             const payload = { 
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
             try {
-                const result = await fetchApiResponse(apiUrl, payload, { 
-                    onRetryMessage: (msg) => ui.geminiResponseEl.innerHTML = `<p>${msg}</p>` 
-                });
+                const result = await fetchApiResponse(apiUrl, payload);
                 const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!jsonText) throw new Error("Received an empty response from the AI service.");
-                
+                if (!jsonText) throw new Error("Received an empty response from the AI.");
                 renderExplanationWithDiagram(ui.geminiResponseEl, jsonText, query);
-                
-                // Save to history
                 const historyData = { type: 'explanation', query, response: jsonText, timestamp: Date.now() };
                 await addDoc(collection(db, `artifacts/${appId}/users/${userId}/explanationHistory`), historyData);
-
             } catch (error) {
                  ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
             }
         }
 
-
         // --- Mock Test Logic ---
-
         async function startFullTest() {
             currentTestType = 'Full Mock Test';
             const paper = prepareTestUI();
             paper.innerHTML = '<p>Generating unique full test... This will take a moment.</p>';
-            
             try {
                 const subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
                 const questionPromises = subjects.map(subject => generateQuestionsForSubject(subject, 45, paper));
@@ -830,7 +822,7 @@
             const paper = prepareTestUI(true);
             paper.innerHTML = `<p>Generating test for ${chapter}...</p>`;
             try {
-                currentTestQuestions = await generateQuestionsForSubject(subject, 20, paper, chapter); // Generate 20 questions for a chapter test
+                currentTestQuestions = await generateQuestionsForSubject(subject, 20, paper, chapter);
                 displayQuestions(currentTestQuestions);
                 startTimer(20);
             } catch (error) {
@@ -840,15 +832,13 @@
         
         async function generateQuestionsForSubject(subject, count, paperElement, chapter = null) {
             const topic = chapter ? `from the chapter "${chapter}"` : `from various chapters`;
-            const prompt = `Generate ${count} unique, high-quality multiple-choice questions for the NEET exam on the subject of ${subject}, focusing on topics ${topic}. Format as a valid JSON array of objects, with keys: "question", "options" (array of 4 strings), "answer" (string "A", "B", "C", or "D"), and "subject" ("${subject}").`;
+            const prompt = `Generate ${count} unique, high-quality MCQs for NEET on ${subject}, topics ${topic}. Format as a valid JSON array of objects with keys: "question", "options" (array of 4 strings), "answer" ("A", "B", "C", or "D"), and "subject" ("${subject}").`;
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             };
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-            const result = await fetchApiResponse(url, payload, { 
-                onRetryMessage: (msg) => paperElement.innerHTML = `<p>${msg}</p>` 
-            });
+            const result = await fetchApiResponse(url, payload);
             const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!jsonText) throw new Error("Received empty question set from AI.");
             return safeJsonParse(jsonText);
@@ -859,7 +849,6 @@
             const timeTakenMs = Date.now() - testStartTime;
             let score = 0, correctCount = 0, incorrectCount = 0, unattemptedCount = 0;
             const userAnswers = [];
-
             currentTestQuestions.forEach((q, index) => {
                 const selected = document.querySelector(`#mock-test-content input[name="q${index}"]:checked`);
                 const answer = selected ? selected.value : null;
@@ -871,89 +860,51 @@
                     unattemptedCount++;
                 }
             });
-
             const testResult = {
-                timestamp: Date.now(),
-                type: 'test', // Unified type for all tests
-                testName: currentTestType,
-                timeTaken: formatTime(timeTakenMs),
-                score, correctCount, incorrectCount, unattemptedCount,
-                questions: JSON.stringify(currentTestQuestions), 
-                userAnswers: JSON.stringify(userAnswers)
+                timestamp: Date.now(), type: 'test', testName: currentTestType,
+                timeTaken: formatTime(timeTakenMs), score, correctCount, incorrectCount, unattemptedCount,
+                questions: JSON.stringify(currentTestQuestions), userAnswers: JSON.stringify(userAnswers)
             };
-            
             try {
                 await addDoc(collection(db, `artifacts/${appId}/users/${userId}/testHistory`), testResult);
             } catch(error) {
-                console.error("Error saving mock test result:", error);
+                console.error("Error saving test result:", error);
             }
-
             displayResults({ ...testResult, questions: currentTestQuestions, userAnswers });
         }
 
         // --- UI Rendering & Updates ---
-
         function renderStructuredResponse(element, data, query) {
-            if (typeof data === 'object' && data !== null && data.shortAnswer && data.detailedAnswer) {
-                const derivationHtml = data.derivation ? `
-                    <div class="mt-6">
-                        <h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3>
-                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                    </div>` : '';
-                element.innerHTML = `
-                    <h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3>
-                    <div class="bg-gray-700 p-4 rounded-lg text-gray-300">${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                    <div class="mt-6">
-                        <h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3>
-                        <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>
-                    </div>
-                    ${derivationHtml}`;
+            let finalHtml = '';
+            if (data.shortAnswer) {
+                finalHtml += `<h3 class="text-xl font-bold text-blue-400 mb-2">Quick Summary</h3><div class="bg-gray-700 p-4 rounded-lg text-gray-300">${data.shortAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>`;
+            }
+            if (data.detailedAnswer) {
+                 finalHtml += `<div class="mt-6"><h3 class="text-xl font-bold text-green-400 mb-2">Detailed Explanation</h3><div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.detailedAnswer.replace(/\*/g, '').replace(/\n/g, '<br>')}</div></div>`;
+            }
+            if (data.derivation) {
+                finalHtml += `<div class="mt-6"><h3 class="text-xl font-bold text-yellow-400 mb-2">Derivation</h3><div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.derivation.replace(/\*/g, '').replace(/\n/g, '<br>')}</div></div>`;
+            }
+            if (finalHtml) {
+                 element.innerHTML = finalHtml;
             } else {
-                const rawText = (typeof data === 'object' && data !== null) ? JSON.stringify(data, null, 2) : String(data);
-                element.innerHTML = `
-                    <h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2>
-                    <p class="text-sm text-yellow-400 mb-4">(The AI response was not in the expected structured format, so it is displayed below as raw text.)</p>
-                    <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${rawText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
+                const rawText = (typeof data === 'object') ? JSON.stringify(data, null, 2) : String(data);
+                element.innerHTML = `<h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2><pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${rawText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
             }
         }
 
         function renderExplanationWithDiagram(element, responseText, query) {
             try {
                 const data = safeJsonParse(responseText);
-                const diagramHtml = data.svgDiagram ? `
-                    <div class="mt-6">
-                        <h3 class="text-xl font-bold text-yellow-400 mb-2">Diagram</h3>
-                        <div class="bg-white p-4 rounded-lg flex justify-center items-center">
-                            ${data.svgDiagram}
-                        </div>
-                    </div>` : '';
-                element.innerHTML = `
-                    <h2 class="text-2xl font-bold text-cyan-400 mb-4">${data.topic}</h2>
-                    <div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">
-                        ${data.explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}
-                    </div>
-                    ${diagramHtml}`;
+                const diagramHtml = data.svgDiagram ? `<div class="mt-6"><h3 class="text-xl font-bold text-yellow-400 mb-2">Diagram</h3><div class="bg-white p-4 rounded-lg flex justify-center items-center">${data.svgDiagram}</div></div>` : '';
+                element.innerHTML = `<h2 class="text-2xl font-bold text-cyan-400 mb-4">${data.topic}</h2><div class="bg-gray-900 p-4 rounded-lg text-gray-300 space-y-4">${data.explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</div>${diagramHtml}`;
             } catch (error) {
-                // If parsing fails, render the raw text as a fallback.
-                element.innerHTML = `
-                    <h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2>
-                    <p class="text-sm text-yellow-400 mb-4">(The AI response was not in the expected structured format, so it is displayed below as raw text.)</p>
-                    <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${responseText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
+                element.innerHTML = `<h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2><p class="text-sm text-yellow-400 mb-4">(AI response was not structured, showing raw text.)</p><pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${responseText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
             }
         }
 
         function resetFullTestModal() {
-            ui.mockTestContent.innerHTML = `
-                <div id="mock-test-instructions">
-                    <h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2>
-                    <ul class="list-disc list-inside text-gray-300 space-y-2">
-                        <li>180 multiple-choice questions.</li>
-                        <li>+4 for correct, -1 for incorrect.</li>
-                        <li>Duration: <strong>3 hours</strong>.</li>
-                    </ul>
-                    <button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button>
-                </div>
-                <div id="mock-test-paper" class="hidden mt-6"></div>`;
+            ui.mockTestContent.innerHTML = `<div id="mock-test-instructions"><h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2><ul class="list-disc list-inside text-gray-300 space-y-2"><li>180 MCQs.</li><li>+4 for correct, -1 for incorrect.</li><li>Duration: <strong>3 hours</strong>.</li></ul><button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button></div><div id="mock-test-paper" class="hidden mt-6"></div>`;
             document.getElementById('start-full-test-btn').addEventListener('click', startFullTest);
         }
 
@@ -961,8 +912,7 @@
             if (isSubjectTest) {
                 ui.mockTestContent.innerHTML = '<div id="mock-test-paper"></div>';
             } else {
-                const instructions = ui.mockTestContent.querySelector('#mock-test-instructions');
-                if (instructions) instructions.classList.add('hidden');
+                ui.mockTestContent.querySelector('#mock-test-instructions')?.classList.add('hidden');
             }
             const paper = ui.mockTestContent.querySelector('#mock-test-paper');
             paper.classList.remove('hidden');
@@ -970,20 +920,14 @@
         }
 
         function handleTestGenerationError(paperElement, error) {
-            let errorMessage = `Failed to generate the test: ${error.message}. Please try again.`;
-            paperElement.innerHTML = `<p class="text-red-400">${errorMessage}</p>`;
+            paperElement.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`;
         }
 
         function displayQuestions(questions) {
             const paper = ui.mockTestContent.querySelector('#mock-test-paper');
-            let questionsHtml = `<div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4">
-                                    <h2 class="text-2xl font-bold">${currentTestType}</h2>
-                                    <div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div>
-                                </div>`;
+            let questionsHtml = `<div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${currentTestType}</h2><div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div></div>`;
             questions.forEach((q, index) => {
-                questionsHtml += `<div class="mb-6"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2" id="q-${index}">
-                    ${q.options.map((opt, i) => `<div><input type="radio" id="q${index}opt${i}" name="q${index}" value="${String.fromCharCode(65 + i)}"><label for="q${index}opt${i}" class="ml-2">${String.fromCharCode(65 + i)}) ${opt}</label></div>`).join('')}
-                </div></div>`;
+                questionsHtml += `<div class="mb-6"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2" id="q-${index}">${q.options.map((opt, i) => `<div><input type="radio" id="q${index}opt${i}" name="q${index}" value="${String.fromCharCode(65 + i)}"><label for="q${index}opt${i}" class="ml-2">${String.fromCharCode(65 + i)}) ${opt}</label></div>`).join('')}</div></div>`;
             });
             questionsHtml += `<button id="submit-test-btn" class="mt-8 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Submit Test</button>`;
             paper.innerHTML = questionsHtml;
@@ -992,41 +936,25 @@
 
         async function handleAllExplanations(result) {
             const explanationsContainer = document.getElementById('explanations-container');
-            explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for all questions... This may take a moment.</p>`;
-            
-            const prompt = `For the following list of multiple-choice questions, provide a clear, concise explanation for each one, explaining why the correct answer is right. Format the response as a valid JSON array of objects, where each object has a "question" key (matching the original question text) and an "explanation" key. Here are the questions: ${JSON.stringify(result.questions)}`;
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
+            explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for all questions...</p>`;
+            const prompt = `For the following MCQs, explain why the correct answer is right. Format as a JSON array of objects, each with "question" and "explanation" keys. Questions: ${JSON.stringify(result.questions)}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
             try {
-                const apiResult = await fetchApiResponse(apiUrl, payload, {
-                    timeout: 180000, // 3-minute timeout for all explanations
-                    onRetryMessage: (msg) => explanationsContainer.innerHTML = `<p>${msg}</p>`
-                });
+                const apiResult = await fetchApiResponse(apiUrl, payload, { timeout: 180000 });
                 const explanations = safeJsonParse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
-                
-                const explanationMap = new Map();
-                explanations.forEach(exp => {
-                    explanationMap.set(exp.question, exp.explanation);
-                });
-
+                const explanationMap = new Map(explanations.map(exp => [exp.question, exp.explanation]));
                 result.questions.forEach((q, index) => {
                     const questionContainer = document.getElementById(`question-review-${index}`);
-                    if (questionContainer) {
-                        const explanation = explanationMap.get(q.question);
-                        if (explanation) {
-                            const explanationDiv = document.createElement('div');
-                            explanationDiv.className = 'mt-4 p-3 bg-gray-900 border-l-2 border-blue-500 rounded-r-lg';
-                            explanationDiv.innerHTML = `<h4 class="font-semibold text-blue-300">Explanation:</h4><p class="text-gray-300">${explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</p>`;
-                            questionContainer.appendChild(explanationDiv);
-                        }
+                    const explanation = explanationMap.get(q.question);
+                    if (questionContainer && explanation) {
+                        const explanationDiv = document.createElement('div');
+                        explanationDiv.className = 'mt-4 p-3 bg-gray-900 border-l-2 border-blue-500 rounded-r-lg';
+                        explanationDiv.innerHTML = `<h4 class="font-semibold text-blue-300">Explanation:</h4><p class="text-gray-300">${explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</p>`;
+                        questionContainer.appendChild(explanationDiv);
                     }
                 });
                 document.getElementById('explanation-buttons').style.display = 'none';
-
             } catch (error) {
                 explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
             }
@@ -1035,54 +963,27 @@
         async function handleMistakeExplanations(result) {
             const explanationsContainer = document.getElementById('explanations-container');
             explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for your mistakes...</p>`;
-            
-            const incorrectQuestions = [];
-            result.questions.forEach((q, index) => {
-                if (result.userAnswers[index] && result.userAnswers[index] !== q.answer) {
-                    incorrectQuestions.push({
-                        question: q.question,
-                        options: q.options,
-                        yourAnswer: result.userAnswers[index],
-                        correctAnswer: q.answer
-                    });
-                }
-            });
-
-            const prompt = `For the following list of multiple-choice questions, I made mistakes. Please provide a clear, concise explanation for each one, explaining why my answer was wrong and the correct answer is right. Format the response as a valid JSON array of objects, where each object has a "question" key and an "explanation" key. Here are my mistakes: ${JSON.stringify(incorrectQuestions)}`;
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
+            const incorrectQuestions = result.questions.filter((q, i) => result.userAnswers[i] && result.userAnswers[i] !== q.answer);
+            const prompt = `For my mistakes in the following MCQs, explain why my answer was wrong and the correct one is right. Format as a JSON array of objects with "question" and "explanation" keys. Mistakes: ${JSON.stringify(incorrectQuestions)}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-
             try {
-                const apiResult = await fetchApiResponse(apiUrl, payload, {
-                    timeout: 120000, 
-                    onRetryMessage: (msg) => explanationsContainer.innerHTML = `<p>${msg}</p>`
-                });
+                const apiResult = await fetchApiResponse(apiUrl, payload, { timeout: 120000 });
                 const explanations = safeJsonParse(apiResult.candidates?.[0]?.content?.parts?.[0]?.text);
-                
-                const explanationMap = new Map();
-                explanations.forEach(exp => {
-                    explanationMap.set(exp.question, exp.explanation);
-                });
-
+                const explanationMap = new Map(explanations.map(exp => [exp.question, exp.explanation]));
                 result.questions.forEach((q, index) => {
                     if (result.userAnswers[index] && result.userAnswers[index] !== q.answer) {
                         const questionContainer = document.getElementById(`question-review-${index}`);
-                        if (questionContainer) {
-                            const explanation = explanationMap.get(q.question);
-                            if (explanation) {
-                                const explanationDiv = document.createElement('div');
-                                explanationDiv.className = 'mt-4 p-3 bg-gray-900 border-l-2 border-yellow-500 rounded-r-lg';
-                                explanationDiv.innerHTML = `<h4 class="font-semibold text-yellow-300">Explanation:</h4><p class="text-gray-300">${explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</p>`;
-                                questionContainer.appendChild(explanationDiv);
-                            }
+                        const explanation = explanationMap.get(q.question);
+                        if (questionContainer && explanation) {
+                            const explanationDiv = document.createElement('div');
+                            explanationDiv.className = 'mt-4 p-3 bg-gray-900 border-l-2 border-yellow-500 rounded-r-lg';
+                            explanationDiv.innerHTML = `<h4 class="font-semibold text-yellow-300">Explanation:</h4><p class="text-gray-300">${explanation.replace(/\*/g, '').replace(/\n/g, '<br>')}</p>`;
+                            questionContainer.appendChild(explanationDiv);
                         }
                     }
                 });
                 document.getElementById('explanation-buttons').style.display = 'none';
-
             } catch (error) {
                 explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
             }
@@ -1091,39 +992,22 @@
         function displayResults(result) {
             const questions = safeJsonParse(result.questions);
             const userAnswers = safeJsonParse(result.userAnswers);
-
-            let buttonsHtml = `<div id="explanation-buttons" class="space-y-4">`;
-            buttonsHtml += `<button id="explain-all-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All Questions</button>`;
+            let buttonsHtml = `<div id="explanation-buttons" class="space-y-4"><button id="explain-all-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md">✨ Generate Explanations for All</button>`;
             if (result.incorrectCount > 0) {
                 buttonsHtml += `<button id="explain-mistakes-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 px-6 rounded-md">🤔 Explain My Mistakes</button>`;
             }
             buttonsHtml += `</div>`;
-
-            let resultsHtml = `<h2 class="text-3xl font-bold mb-4">${result.testName || result.type} - Results</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
-                    <div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Score</p></div>
-                    <div class="bg-green-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.correctCount}</p><p>Correct</p></div>
-                    <div class="bg-red-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.incorrectCount}</p><p>Incorrect</p></div>
-                    <div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div>
-                </div>
-                <p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>
-                ${buttonsHtml}
-                <div id="explanations-container" class="mt-4"></div>
-                <h3 class="text-2xl font-bold mb-4 mt-6">Review Answers</h3>`;
-            
+            let resultsHtml = `<h2 class="text-3xl font-bold mb-4">${result.testName || result.type} - Results</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8"><div class="bg-gray-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.score}</p><p>Score</p></div><div class="bg-green-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.correctCount}</p><p>Correct</p></div><div class="bg-red-700 p-4 rounded-lg"><p class="text-2xl font-bold">${result.incorrectCount}</p><p>Incorrect</p></div><div class="bg-gray-600 p-4 rounded-lg"><p class="text-2xl font-bold">${result.unattemptedCount}</p><p>Unattempted</p></div></div><p class="text-center text-lg mb-6">Time Taken: <strong>${result.timeTaken}</strong></p>${buttonsHtml}<div id="explanations-container" class="mt-4"></div><h3 class="text-2xl font-bold mb-4 mt-6">Review Answers</h3>`;
             questions.forEach((q, index) => {
                 const userAnswer = userAnswers[index];
                 let optionsHtml = q.options.map((opt, i) => {
                     const optionLetter = String.fromCharCode(65 + i);
-                    let labelClass = '';
-                    if (optionLetter === q.answer) labelClass = 'correct-answer';
-                    else if (optionLetter === userAnswer) labelClass = 'incorrect-answer';
+                    let labelClass = (optionLetter === q.answer) ? 'correct-answer' : (optionLetter === userAnswer) ? 'incorrect-answer' : '';
                     return `<div><label class="ml-2 ${labelClass}">${optionLetter}) ${opt}</label></div>`;
                 }).join('');
                 resultsHtml += `<div id="question-review-${index}" class="mb-6 p-4 bg-gray-800 rounded-lg"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2">${optionsHtml}</div></div>`;
             });
             ui.mockTestContent.innerHTML = resultsHtml;
-
             document.getElementById('explain-all-btn').addEventListener('click', () => handleAllExplanations({ ...result, questions, userAnswers }));
             if (result.incorrectCount > 0) {
                 document.getElementById('explain-mistakes-btn').addEventListener('click', () => handleMistakeExplanations({ ...result, questions, userAnswers }));
@@ -1135,69 +1019,44 @@
             const yearDropdown = ui[`${camelCaseType}Year`];
             const subjectDropdown = ui[`${camelCaseType}Subject`];
             const chapterDropdown = ui[`${camelCaseType}Chapter`];
-
             if(!yearDropdown || !subjectDropdown || !chapterDropdown) return;
-
             const year = yearDropdown.value;
             const currentSubject = subjectDropdown.value;
-            
             subjectDropdown.innerHTML = '';
             Object.keys(syllabus[year]).forEach(subject => {
                 const option = document.createElement('option');
-                option.value = subject;
-                option.textContent = subject;
-                if (subject === currentSubject) {
-                    option.selected = true;
-                }
+                option.value = subject; option.textContent = subject;
+                if (subject === currentSubject) option.selected = true;
                 subjectDropdown.appendChild(option);
             });
-
             const selectedSubject = subjectDropdown.value || Object.keys(syllabus[year])[0];
             chapterDropdown.innerHTML = '';
             syllabus[year][selectedSubject].forEach(chapter => {
                 const option = document.createElement('option');
-                option.value = chapter;
-                option.textContent = chapter;
+                option.value = chapter; option.textContent = chapter;
                 chapterDropdown.appendChild(option);
             });
         }
         
         function setupHistoryListeners() {
             if (!userId) return;
-            // Unsubscribe from old listeners if they exist
             if (unsubscribeTestHistory) unsubscribeTestHistory();
             if (unsubscribeSearchHistory) unsubscribeSearchHistory();
             if (unsubscribeExplanationHistory) unsubscribeExplanationHistory();
-
             const testHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/testHistory`);
             const searchHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/searchHistory`);
             const explanationHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/explanationHistory`);
-
             const updateCombinedHistory = () => {
                 const tests = testHistory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const searches = searchHistory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const explanations = explanationHistory.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
                 combinedHistory = [...tests, ...searches, ...explanations].sort((a, b) => b.timestamp - a.timestamp);
                 renderHistory();
             };
-
-            let testHistory = { docs: [] };
-            let searchHistory = { docs: [] };
-            let explanationHistory = { docs: [] };
-
-            unsubscribeTestHistory = onSnapshot(query(testHistoryCol, orderBy("timestamp", "desc")), (snapshot) => {
-                testHistory = snapshot;
-                updateCombinedHistory();
-            });
-            unsubscribeSearchHistory = onSnapshot(query(searchHistoryCol, orderBy("timestamp", "desc")), (snapshot) => {
-                searchHistory = snapshot;
-                updateCombinedHistory();
-            });
-            unsubscribeExplanationHistory = onSnapshot(query(explanationHistoryCol, orderBy("timestamp", "desc")), (snapshot) => {
-                explanationHistory = snapshot;
-                updateCombinedHistory();
-            });
+            let testHistory = { docs: [] }, searchHistory = { docs: [] }, explanationHistory = { docs: [] };
+            unsubscribeTestHistory = onSnapshot(query(testHistoryCol, orderBy("timestamp", "desc")), (snapshot) => { testHistory = snapshot; updateCombinedHistory(); });
+            unsubscribeSearchHistory = onSnapshot(query(searchHistoryCol, orderBy("timestamp", "desc")), (snapshot) => { searchHistory = snapshot; updateCombinedHistory(); });
+            unsubscribeExplanationHistory = onSnapshot(query(explanationHistoryCol, orderBy("timestamp", "desc")), (snapshot) => { explanationHistory = snapshot; updateCombinedHistory(); });
         }
 
         function renderHistory() {
@@ -1206,49 +1065,32 @@
                  ui.historyContent.innerHTML = '<p class="text-gray-400">No history yet. Take a test or search for a concept to get started!</p>';
                  return;
             }
-
             const groupedByDate = combinedHistory.reduce((acc, result) => {
                 const date = new Date(result.timestamp).toLocaleDateString('en-CA'); 
                 if (!acc[date]) acc[date] = [];
                 acc[date].push(result);
                 return acc;
             }, {});
-
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-
             sortedDates.forEach(dateStr => {
                 const dateHeading = document.createElement('h3');
                 dateHeading.className = 'text-lg font-semibold mt-4 mb-2 text-gray-400';
-                
                 const today = new Date().toLocaleDateString('en-CA');
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                
-                if (dateStr === today) {
-                    dateHeading.textContent = 'Today';
-                } else if (dateStr === yesterday.toLocaleDateString('en-CA')) {
-                    dateHeading.textContent = 'Yesterday';
-                } else {
-                    dateHeading.textContent = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                }
+                const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                if (dateStr === today) dateHeading.textContent = 'Today';
+                else if (dateStr === yesterday.toLocaleDateString('en-CA')) dateHeading.textContent = 'Yesterday';
+                else dateHeading.textContent = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                 ui.historyContent.appendChild(dateHeading);
-
                 groupedByDate[dateStr].forEach(item => {
                     const record = document.createElement('div');
                     record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
-                    const itemTime = new Date(item.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                    
                     let itemHtml = '';
                     if (item.type === 'test') {
                         itemHtml = `<div><p class="font-bold">${item.testName}</p><p>Score: ${item.score}</p></div>`;
-                    } else if (item.type === 'search') {
-                        itemHtml = `<div><p class="font-bold">Searched:</p><p>${item.query}</p></div>`;
-                    } else if (item.type === 'explanation') {
-                        itemHtml = `<div><p class="font-bold">Explained:</p><p>${item.query}</p></div>`;
+                    } else if (item.type === 'search' || item.type === 'explanation') {
+                        itemHtml = `<div><p class="font-bold">${item.type === 'search' ? 'Searched' : 'Explained'}:</p><p>${item.query}</p></div>`;
                     }
-                    
                     record.innerHTML = `${itemHtml}<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">View</button>`;
-                    
                     record.querySelector('button').addEventListener('click', () => {
                         ui.historyModal.style.display = 'none';
                         if (item.type === 'test') {
@@ -1256,10 +1098,12 @@
                             displayResults(item);
                         } else {
                             ui.resultsSection.classList.remove('hidden');
-                            if (item.type === 'search') {
-                                renderStructuredResponse(ui.geminiResponseEl, JSON.parse(item.response), item.query);
-                            } else if (item.type === 'explanation') {
-                                renderExplanationWithDiagram(ui.geminiResponseEl, item.response, item.query);
+                            const responseData = safeJsonParse(item.response);
+                            if (responseData && typeof responseData === 'object') {
+                                if (item.type === 'explanation') renderExplanationWithDiagram(ui.geminiResponseEl, item.response, item.query);
+                                else renderStructuredResponse(ui.geminiResponseEl, responseData, item.query);
+                            } else {
+                                renderStructuredResponse(ui.geminiResponseEl, { detailedAnswer: item.response }, item.query);
                             }
                         }
                     });
