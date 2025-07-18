@@ -141,7 +141,7 @@
             0% { background-position: 0% 0%; }
             100% { background-position: 100% 100%; }
         }
-        /* NEW: Mic button listening animation */
+        /* Mic button listening animation */
         .mic-listening {
             box-shadow: 0 0 15px 5px rgba(229, 9, 20, 0.7);
         }
@@ -199,20 +199,28 @@
                     <button id="mic-btn" class="absolute inset-y-0 left-0 pl-4 flex items-center cursor-pointer">
                         <svg class="h-6 w-6 text-gray-400 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                     </button>
-                    <input type="text" id="search-input" class="w-full bg-gray-800 text-white p-4 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-red-500 pl-14 pr-24">
+                    <input type="text" id="search-input" class="w-full bg-gray-800 text-white p-4 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-red-500 pl-14 pr-32">
                     
-                    <input type="file" id="file-upload-input" class="hidden" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
-                    <button id="upload-btn" class="absolute inset-y-0 right-0 pr-14 flex items-center cursor-pointer">
-                        <svg class="h-6 w-6 text-gray-400 hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" />
-                        </svg>
-                    </button>
-                    
-                    <button id="clear-search-btn" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer hidden">
-                        <svg class="h-6 w-6 text-gray-500 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 space-x-3">
+                        <!-- NEW: Camera Button -->
+                        <button id="camera-btn" class="cursor-pointer">
+                            <svg class="h-6 w-6 text-gray-400 hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.776 48.776 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                            </svg>
+                        </button>
+                        <input type="file" id="file-upload-input" class="hidden" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                        <button id="upload-btn" class="cursor-pointer">
+                            <svg class="h-6 w-6 text-gray-400 hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" />
+                            </svg>
+                        </button>
+                        <button id="clear-search-btn" class="cursor-pointer hidden">
+                            <svg class="h-6 w-6 text-gray-500 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
                 </div>
-                <div id="file-display-area" class="mt-3 text-center hidden"></div>
+                <div id="file-display-area" class="mt-3 text-center"></div>
                  <button id="search-btn" class="w-full md:w-auto mt-4 tlearn-red hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full text-lg">Search</button>
             </div>
             
@@ -325,6 +333,17 @@
             </div>
         </div>
     </div>
+    
+    <!-- NEW: Camera Modal -->
+    <div id="camera-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-camera" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-center">Capture Photo</h2>
+            <video id="camera-feed" class="w-full rounded-lg" autoplay playsinline></video>
+            <canvas id="camera-canvas" class="hidden"></canvas>
+            <button id="snap-photo-btn" class="w-full mt-4 tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Snap Photo</button>
+        </div>
+    </div>
 
 
     <script type="module">
@@ -343,6 +362,7 @@
         let currentTestType = '';
         let lastGreetingIndex = -1;
         let uploadedFileContent = null;
+        let cameraStream = null;
 
         // --- IMPORTANT: API KEY MANAGEMENT ---
         const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do"; 
@@ -361,6 +381,7 @@
             clearSearchBtn: document.getElementById('clear-search-btn'),
             micBtn: document.getElementById('mic-btn'),
             uploadBtn: document.getElementById('upload-btn'),
+            cameraBtn: document.getElementById('camera-btn'),
             fileUploadInput: document.getElementById('file-upload-input'),
             fileDisplayArea: document.getElementById('file-display-area'),
             resultsSection: document.getElementById('results-section'),
@@ -377,12 +398,14 @@
             studyPlanModal: document.getElementById('study-plan-modal'),
             chapterTestModal: document.getElementById('chapter-test-modal'),
             chapterExplanationModal: document.getElementById('chapter-explanation-modal'),
+            cameraModal: document.getElementById('camera-modal'),
             closeMockTest: document.getElementById('close-mock-test'),
             closeSubjectTest: document.getElementById('close-subject-test'),
             closeHistory: document.getElementById('close-history'),
             closeStudyPlan: document.getElementById('close-study-plan'),
             closeChapterTest: document.getElementById('close-chapter-test'),
             closeChapterExplanation: document.getElementById('close-chapter-explanation'),
+            closeCamera: document.getElementById('close-camera'),
             mockTestContent: document.getElementById('mock-test-content'),
             subjectChoiceContainer: document.getElementById('subject-choice-container'),
             historyContent: document.getElementById('history-content'),
@@ -399,6 +422,9 @@
             chapterExpChapter: document.getElementById('chapter-exp-chapter'),
             chapterExpTopic: document.getElementById('chapter-exp-topic'),
             getExplanationBtn: document.getElementById('get-explanation-btn'),
+            cameraFeed: document.getElementById('camera-feed'),
+            cameraCanvas: document.getElementById('camera-canvas'),
+            snapPhotoBtn: document.getElementById('snap-photo-btn'),
         };
 
         const specialGreetings = [
@@ -440,6 +466,8 @@
             ui.micBtn.addEventListener('click', handleVoiceSearch);
             ui.uploadBtn.addEventListener('click', () => ui.fileUploadInput.click());
             ui.fileUploadInput.addEventListener('change', handleFileUpload);
+            ui.cameraBtn.addEventListener('click', openCamera);
+            ui.snapPhotoBtn.addEventListener('click', snapPhoto);
 
             ui.mockTestBtn.addEventListener('click', () => {
                 resetFullTestModal();
@@ -468,11 +496,15 @@
             ui.closeStudyPlan.addEventListener('click', () => ui.studyPlanModal.style.display = 'none');
             ui.closeChapterTest.addEventListener('click', () => ui.chapterTestModal.style.display = 'none');
             ui.closeChapterExplanation.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'none');
+            ui.closeCamera.addEventListener('click', closeCamera);
             
             window.addEventListener('click', (event) => {
-                const modals = [ui.mockTestModal, ui.historyModal, ui.subjectTestModal, ui.studyPlanModal, ui.chapterTestModal, ui.chapterExplanationModal];
+                const modals = [ui.mockTestModal, ui.historyModal, ui.subjectTestModal, ui.studyPlanModal, ui.chapterTestModal, ui.chapterExplanationModal, ui.cameraModal];
                 modals.forEach(modal => {
-                    if (event.target == modal) modal.style.display = 'none';
+                    if (event.target == modal) {
+                        if (modal === ui.cameraModal) closeCamera();
+                        else modal.style.display = 'none';
+                    }
                 });
             });
 
@@ -552,8 +584,8 @@
         async function fetchApiResponse(url, payload, options = {}) {
             const { timeout = 120000, retries = 3, onRetryMessage } = options;
             
-            if (geminiApiKey === "YOUR_GEMINI_API_KEY") {
-                throw new Error("Gemini API key is missing. Please add your key to the script to use AI features.");
+            if (geminiApiKey === "YOUR_API_KEY_HERE") {
+                throw new Error("API key is missing. Please add your key from Google AI Studio to the script.");
             }
 
             let lastError;
@@ -613,7 +645,6 @@
         // --- Feature Handlers ---
         function clearFile() {
             uploadedFileContent = null;
-            ui.fileDisplayArea.classList.add('hidden');
             ui.fileDisplayArea.innerHTML = '';
             ui.fileUploadInput.value = ''; // Reset file input
             ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value.trim() === '');
@@ -649,7 +680,6 @@
             recognition.start();
         }
         
-        // MODIFIED: Function to handle all file types
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -659,23 +689,62 @@
                 uploadedFileContent = {
                     name: file.name,
                     mimeType: file.type,
-                    data: e.target.result // base64 data URL
+                    data: e.target.result
                 };
-                
-                ui.fileDisplayArea.innerHTML = `
-                    <span class="bg-gray-600 text-sm py-1 px-3 rounded-full inline-flex items-center gap-2">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" /></svg>
-                        <span>${file.name}</span>
-                        <button id="clear-file-btn" class="text-gray-300 hover:text-white font-bold">&times;</button>
-                    </span>`;
-                ui.fileDisplayArea.classList.remove('hidden');
-                ui.clearSearchBtn.classList.remove('hidden');
-                document.getElementById('clear-file-btn').addEventListener('click', clearFile);
+                displayUploadedFile();
             };
             reader.readAsDataURL(file);
         }
 
-        // MODIFIED: Function to handle search with file analysis
+        async function openCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    ui.cameraFeed.srcObject = cameraStream;
+                    ui.cameraModal.style.display = 'block';
+                } catch (err) {
+                    console.error("Error accessing camera: ", err);
+                    ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: Could not access the camera. Please check permissions.</p>`;
+                    ui.resultsSection.classList.remove('hidden');
+                }
+            }
+        }
+
+        function closeCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+            ui.cameraModal.style.display = 'none';
+        }
+
+        function snapPhoto() {
+            const canvas = ui.cameraCanvas;
+            const video = ui.cameraFeed;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            uploadedFileContent = {
+                name: `capture-${Date.now()}.jpg`,
+                mimeType: 'image/jpeg',
+                data: dataUrl
+            };
+            
+            closeCamera();
+            displayUploadedFile();
+        }
+
+        function displayUploadedFile() {
+            ui.fileDisplayArea.innerHTML = `
+                <span class="bg-gray-600 text-sm py-1 px-3 rounded-full inline-flex items-center gap-2">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" /></svg>
+                    <span>${uploadedFileContent.name}</span>
+                </span>`;
+            ui.clearSearchBtn.classList.remove('hidden');
+        }
+
         async function handleSearch() {
             const query = ui.searchInput.value.trim();
             if ((!query && !uploadedFileContent) || !userId) return;
@@ -832,7 +901,7 @@
         
         async function generateQuestionsForSubject(subject, count, paperElement, chapter = null) {
             const topic = chapter ? `from the chapter "${chapter}"` : `from various chapters`;
-            const prompt = `Generate ${count} unique, high-quality MCQs for NEET on ${subject}, topics ${topic}. Format as a valid JSON array of objects with keys: "question", "options" (array of 4 strings), "answer" ("A", "B", "C", or "D"), and "subject" ("${subject}").`;
+            const prompt = `Generate ${count} unique and non-repetitive, high-quality multiple-choice questions for the NEET exam on the subject of ${subject}, focusing on topics ${topic}. It is crucial that every question is distinct from the others. Format as a valid JSON array of objects with keys: "question", "options" (array of 4 strings), "answer" ("A", "B", "C", or "D"), and "subject" ("${subject}").`;
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
