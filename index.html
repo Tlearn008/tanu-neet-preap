@@ -72,7 +72,7 @@
             z-index: 1;
         }
 
-        #password-input:focus {
+        #password-input:focus, #username-input:focus {
             box-shadow: 0 0 15px rgba(229, 9, 20, 0.7);
             border-color: #E50914;
         }
@@ -158,9 +158,11 @@
         </div>
         <div class="glassmorphism-box p-8 rounded-xl shadow-2xl text-center w-full max-w-sm">
             <h1 class="text-3xl font-bold mb-4">Thanu – Unlock to Learn More</h1>
-            <p class="text-gray-400 mb-6">Enter Passcode</p>
-            <input type="password" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center tracking-widest text-2xl border-2 border-transparent transition-all duration-300" maxlength="8">
-            <p id="error-message" class="text-red-500 mt-4 hidden">Incorrect Passcode</p>
+            <p class="text-gray-400 mb-6">Enter Username and Passcode</p>
+            <input type="text" id="username-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center border-2 border-transparent transition-all duration-300 mb-4" placeholder="Thanu">
+            <input type="password" id="password-input" class="w-full bg-gray-800 text-white p-3 rounded-md text-center tracking-widest text-2xl border-2 border-transparent transition-all duration-300" maxlength="8" placeholder="Passcode">
+            <p id="error-message" class="text-red-500 mt-4 hidden"></p>
+            <button id="unlock-btn" class="w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md mt-6">Unlock</button>
         </div>
     </div>
 
@@ -182,7 +184,7 @@
         </header>
 
         <main class="p-4 md:p-8">
-            <h2 class="text-4xl font-bold mb-8 text-center">What will you conquer today, Thanu?</h2>
+            <h2 class="text-4xl font-bold mb-8 text-center">What will you conquer today, <span id="dashboard-username"></span>?</h2>
             
             <div class="flex items-center justify-center flex-wrap gap-3 mb-8">
                 <button id="study-plan-btn" class="action-button bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full text-sm">✨ Study Plan</button>
@@ -263,7 +265,7 @@
         <div class="modal-content" style="max-width: 600px;">
             <span id="close-subject-test" class="close">&times;</span>
             <h2 class="text-2xl font-bold mb-6 text-center">Choose a Subject</h2>
-            <div id="subject-choice-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button class="subject-choice-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Physics">Physics</button>
                 <button class="subject-choice-btn bg-green-600 hover:bg-green-700 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Chemistry">Chemistry</button>
                 <button class="subject-choice-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-6 px-6 rounded-md text-xl" data-subject="Botany">Botany</button>
@@ -275,7 +277,7 @@
     <div id="history-modal" class="modal">
         <div class="modal-content">
             <span id="close-history" class="close">&times;</span>
-            <h2 class="text-2xl font-bold mb-4">My Learning History</h2>
+            <h2 class="text-2xl font-bold mb-4">My Learning History (<span id="history-username"></span>)</h2>
             <div id="history-content"></div>
         </div>
     </div>
@@ -345,15 +347,52 @@
         </div>
     </div>
 
+    <!-- Calculator Modal -->
+    <div id="calculator-modal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <span id="close-calculator" class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-center">Calculator</h2>
+            <div class="p-4 bg-gray-900 rounded-lg">
+                <input type="text" id="calculator-display" class="w-full bg-gray-800 text-white text-right p-3 rounded-md mb-3 text-3xl" value="0" disabled>
+                <div class="grid grid-cols-4 gap-2">
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="C">C</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="&larr;">&larr;</button>
+                    <button class="calc-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-md text-xl" data-value="/">/</button>
+                    <button class="calc-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-md text-xl" data-value="*">*</button>
+
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="7">7</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="8">8</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="9">9</button>
+                    <button class="calc-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-md text-xl" data-value="-">-</button>
+
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="4">4</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="5">5</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="6">6</button>
+                    <button class="calc-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-md text-xl" data-value="+">+</button>
+
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="1">1</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="2">2</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value="3">3</button>
+                    <button class="calc-btn bg-green-600 hover:bg-green-700 p-3 rounded-md text-xl row-span-2" data-value="=">=</button>
+
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl col-span-2" data-value="0">0</button>
+                    <button class="calc-btn bg-gray-700 hover:bg-gray-600 p-3 rounded-md text-xl" data-value=".">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
         // --- Firebase SDK Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Import signInWithEmailAndPassword and onAuthStateChanged for persistent login
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"; 
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, setDoc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; 
 
         // --- Application State ---
         let db, auth, userId, appId;
+        let username = "Thanu"; // Fixed display username
         let unsubscribeTestHistory, unsubscribeSearchHistory, unsubscribeExplanationHistory;
         let currentTestQuestions = [];
         let combinedHistory = [];
@@ -367,72 +406,19 @@
         // --- IMPORTANT: API KEY MANAGEMENT ---
         const geminiApiKey = "AIzaSyD_Dxv-dgdv8PYp97-F74dM0day1FEA8Do"; 
 
+        // --- HARDCODED LOGIN CREDENTIALS (SECURITY RISK IN PRODUCTION) ---
+        const HARDCODED_EMAIL = "tlearn008@gmail.com";
+        const HARDCODED_PASSWORD = "Tlearn0210";
+
         // --- DOM Elements Cache ---
-        const ui = {
-            passwordInput: document.getElementById('password-input'),
-            lockScreen: document.getElementById('lock-screen'),
-            welcomeScreen: document.getElementById('welcome-screen'),
-            mainDashboard: document.getElementById('main-dashboard'),
-            errorMessage: document.getElementById('error-message'),
-            welcomeGreet: document.getElementById('welcome-greet'),
-            welcomeSubtext: document.getElementById('welcome-subtext'),
-            searchBtn: document.getElementById('search-btn'),
-            searchInput: document.getElementById('search-input'),
-            clearSearchBtn: document.getElementById('clear-search-btn'),
-            micBtn: document.getElementById('mic-btn'),
-            uploadBtn: document.getElementById('upload-btn'),
-            cameraBtn: document.getElementById('camera-btn'),
-            fileUploadInput: document.getElementById('file-upload-input'),
-            fileDisplayArea: document.getElementById('file-display-area'),
-            resultsSection: document.getElementById('results-section'),
-            geminiResponseEl: document.getElementById('gemini-response'),
-            mockTestBtn: document.getElementById('mock-test-btn'),
-            subjectTestBtn: document.getElementById('subject-test-btn'),
-            historyBtn: document.getElementById('icon-history-btn'),
-            studyPlanBtn: document.getElementById('study-plan-btn'),
-            chapterTestBtn: document.getElementById('chapter-test-btn'),
-            chapterExpBtn: document.getElementById('chapter-exp-btn'),
-            mockTestModal: document.getElementById('mock-test-modal'),
-            subjectTestModal: document.getElementById('subject-test-modal'),
-            historyModal: document.getElementById('history-modal'),
-            studyPlanModal: document.getElementById('study-plan-modal'),
-            chapterTestModal: document.getElementById('chapter-test-modal'),
-            chapterExplanationModal: document.getElementById('chapter-explanation-modal'),
-            cameraModal: document.getElementById('camera-modal'),
-            closeMockTest: document.getElementById('close-mock-test'),
-            closeSubjectTest: document.getElementById('close-subject-test'),
-            closeHistory: document.getElementById('close-history'),
-            closeStudyPlan: document.getElementById('close-study-plan'),
-            closeChapterTest: document.getElementById('close-chapter-test'),
-            closeChapterExplanation: document.getElementById('close-chapter-explanation'),
-            closeCamera: document.getElementById('close-camera'),
-            mockTestContent: document.getElementById('mock-test-content'),
-            subjectChoiceContainer: document.getElementById('subject-choice-container'),
-            historyContent: document.getElementById('history-content'),
-            generatePlanBtn: document.getElementById('generate-plan-btn'),
-            studyPlanOutput: document.getElementById('study-plan-output'),
-            studyWeeks: document.getElementById('study-weeks'),
-            studySubjects: document.getElementById('study-subjects'),
-            chapterTestYear: document.getElementById('chapter-test-year'),
-            chapterTestSubject: document.getElementById('chapter-test-subject'),
-            chapterTestChapter: document.getElementById('chapter-test-chapter'),
-            startChapterTestBtn: document.getElementById('start-chapter-test-btn'),
-            chapterExpYear: document.getElementById('chapter-exp-year'),
-            chapterExpSubject: document.getElementById('chapter-exp-subject'),
-            chapterExpChapter: document.getElementById('chapter-exp-chapter'),
-            chapterExpTopic: document.getElementById('chapter-exp-topic'),
-            getExplanationBtn: document.getElementById('get-explanation-btn'),
-            cameraFeed: document.getElementById('camera-feed'),
-            cameraCanvas: document.getElementById('camera-canvas'),
-            snapPhotoBtn: document.getElementById('snap-photo-btn'),
-        };
+        const ui = {}; // Initialize as empty, populate inside DOMContentLoaded
 
         const specialGreetings = [
-            { main: "Welcome, Thanu!", sub: "Ready to show those MCQs who's boss?" },
-            { main: "Hello, Superstar!", sub: "Another day, another step closer to that white coat." },
-            { main: "Thanu is in the house!", sub: "Let's turn that brainpower up to 11." },
-            { main: "Hey there, Future Dr. Thanu!", sub: "Your journey is inspiring. Let's keep going!" },
-            { main: "It's a great day to study!", sub: "Let's make some magic happen, Thanu." }
+            { main: "Welcome, Thanu!", sub: "Ready to show those MCQs who's boss?" }, 
+            { main: "Hello, Superstar Thanu!", sub: "Another day, another step closer to that white coat." }, 
+            { main: "Thanu is in the house!", sub: "Let's turn that brainpower up to 11." }, 
+            { main: "Hey there, Future Dr. Thanu!", sub: "Your journey is inspiring. Let's keep going!" }, 
+            { main: "It's a great day to study!", sub: "Let's make some magic happen, Thanu." } 
         ];
 
         const syllabus = {
@@ -452,67 +438,197 @@
 
         // --- Event Listeners Setup ---
         function setupEventListeners() {
-            ui.passwordInput.addEventListener('input', (e) => {
-                if (e.target.value.length === 8) handleLogin(e.target.value);
-            });
-            ui.searchBtn.addEventListener('click', handleSearch);
-            
-            ui.searchInput.addEventListener('input', () => {
-                const hasText = ui.searchInput.value.trim() !== '';
-                const hasFile = uploadedFileContent !== null;
-                ui.clearSearchBtn.classList.toggle('hidden', !hasText && !hasFile);
-            });
-            ui.clearSearchBtn.addEventListener('click', handleClearSearch);
-            ui.micBtn.addEventListener('click', handleVoiceSearch);
-            ui.uploadBtn.addEventListener('click', () => ui.fileUploadInput.click());
-            ui.fileUploadInput.addEventListener('change', handleFileUpload);
-            ui.cameraBtn.addEventListener('click', openCamera);
-            ui.snapPhotoBtn.addEventListener('click', snapPhoto);
+            // Populate ui object properties here, after DOM is ready
+            ui.usernameInput = document.getElementById('username-input');
+            ui.passwordInput = document.getElementById('password-input');
+            ui.unlockBtn = document.getElementById('unlock-btn'); 
+            ui.lockScreen = document.getElementById('lock-screen');
+            ui.welcomeScreen = document.getElementById('welcome-screen');
+            ui.mainDashboard = document.getElementById('main-dashboard');
+            ui.errorMessage = document.getElementById('error-message');
+            ui.welcomeGreet = document.getElementById('welcome-greet');
+            ui.welcomeSubtext = document.getElementById('welcome-subtext');
+            ui.dashboardUsername = document.getElementById('dashboard-username'); 
+            ui.historyUsername = document.getElementById('history-username'); 
+            ui.searchBtn = document.getElementById('search-btn');
+            ui.searchInput = document.getElementById('search-input');
+            ui.clearSearchBtn = document.getElementById('clear-search-btn');
+            ui.micBtn = document.getElementById('mic-btn');
+            ui.uploadBtn = document.getElementById('upload-btn');
+            ui.cameraBtn = document.getElementById('camera-btn');
+            ui.fileUploadInput = document.getElementById('file-upload-input');
+            ui.fileDisplayArea = document.getElementById('file-display-area');
+            ui.resultsSection = document.getElementById('results-section');
+            ui.geminiResponseEl = document.getElementById('gemini-response');
+            ui.mockTestBtn = document.getElementById('mock-test-btn');
+            ui.subjectTestBtn = document.getElementById('subject-test-btn');
+            ui.historyBtn = document.getElementById('icon-history-btn');
+            ui.studyPlanBtn = document.getElementById('study-plan-btn');
+            ui.chapterTestBtn = document.getElementById('chapter-test-btn');
+            ui.chapterExpBtn = document.getElementById('chapter-exp-btn');
+            ui.mockTestModal = document.getElementById('mock-test-modal');
+            ui.subjectTestModal = document.getElementById('subject-test-modal');
+            ui.historyModal = document.getElementById('history-modal');
+            ui.studyPlanModal = document.getElementById('study-plan-modal');
+            ui.chapterTestModal = document.getElementById('chapter-test-modal');
+            ui.chapterExplanationModal = document.getElementById('chapter-explanation-modal');
+            ui.cameraModal = document.getElementById('camera-modal');
+            ui.calculatorModal = document.getElementById('calculator-modal'); 
+            ui.closeMockTest = document.getElementById('close-mock-test');
+            ui.closeSubjectTest = document.getElementById('close-subject-test');
+            ui.closeHistory = document.getElementById('close-history');
+            ui.closeStudyPlan = document.getElementById('close-study-plan');
+            ui.closeChapterTest = document.getElementById('close-chapter-test');
+            ui.closeChapterExplanation = document.getElementById('close-chapter-explanation');
+            ui.closeCamera = document.getElementById('close-camera');
+            ui.closeCalculator = document.getElementById('close-calculator'); 
+            ui.mockTestContent = document.getElementById('mock-test-content');
+            ui.subjectChoiceContainer = document.getElementById('subject-choice-container');
+            ui.historyContent = document.getElementById('history-content');
+            ui.generatePlanBtn = document.getElementById('generate-plan-btn');
+            ui.studyPlanOutput = document.getElementById('study-plan-output');
+            ui.studyWeeks = document.getElementById('study-weeks');
+            ui.studySubjects = document.getElementById('study-subjects');
+            ui.chapterTestYear = document.getElementById('chapter-test-year');
+            ui.chapterTestSubject = document.getElementById('chapter-test-subject');
+            ui.chapterTestChapter = document.getElementById('chapter-test-chapter');
+            ui.startChapterTestBtn = document.getElementById('start-chapter-test-btn');
+            ui.chapterExpYear = document.getElementById('chapter-exp-year');
+            ui.chapterExpSubject = document.getElementById('chapter-exp-subject');
+            ui.chapterExpChapter = document.getElementById('chapter-exp-chapter');
+            ui.chapterExpTopic = document.getElementById('chapter-exp-topic');
+            ui.getExplanationBtn = document.getElementById('get-explanation-btn');
+            ui.cameraFeed = document.getElementById('camera-feed');
+            ui.cameraCanvas = document.getElementById('camera-canvas');
+            ui.snapPhotoBtn = document.getElementById('snap-photo-btn');
+            ui.calculatorDisplay = document.getElementById('calculator-display'); 
 
-            ui.mockTestBtn.addEventListener('click', () => {
-                resetFullTestModal();
-                ui.mockTestModal.style.display = 'block';
-            });
-            ui.subjectTestBtn.addEventListener('click', () => ui.subjectTestModal.style.display = 'block');
-            ui.subjectChoiceContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('subject-choice-btn')) {
-                    const subject = e.target.dataset.subject;
-                    ui.subjectTestModal.style.display = 'none';
-                    startSubjectTest(subject);
-                }
-            });
-            ui.historyBtn.addEventListener('click', () => ui.historyModal.style.display = 'block');
-            ui.studyPlanBtn.addEventListener('click', () => ui.studyPlanModal.style.display = 'block');
-            ui.generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
-            
-            ui.chapterTestBtn.addEventListener('click', () => ui.chapterTestModal.style.display = 'block');
-            ui.chapterExpBtn.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'block');
-            ui.startChapterTestBtn.addEventListener('click', startChapterTest);
-            ui.getExplanationBtn.addEventListener('click', handleChapterExplanation);
 
-            ui.closeMockTest.addEventListener('click', () => ui.mockTestModal.style.display = 'none');
-            ui.closeSubjectTest.addEventListener('click', () => ui.subjectTestModal.style.display = 'none');
-            ui.closeHistory.addEventListener('click', () => ui.historyModal.style.display = 'none');
-            ui.closeStudyPlan.addEventListener('click', () => ui.studyPlanModal.style.display = 'none');
-            ui.closeChapterTest.addEventListener('click', () => ui.chapterTestModal.style.display = 'none');
-            ui.closeChapterExplanation.addEventListener('click', () => ui.chapterExplanationModal.style.display = 'none');
-            ui.closeCamera.addEventListener('click', closeCamera);
+            // Event listener for the Unlock button
+            if (ui.unlockBtn) { 
+                ui.unlockBtn.addEventListener('click', () => {
+                    handleLogin(ui.passwordInput.value, ui.usernameInput.value);
+                });
+            } else {
+                console.error("Error: unlockBtn not found in DOM for event listener.");
+            }
             
+            // Event listener for Enter key on password input
+            if (ui.passwordInput) { 
+                ui.passwordInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        handleLogin(ui.passwordInput.value, ui.usernameInput.value);
+                    }
+                });
+            } else {
+                console.error("Error: passwordInput not found in DOM for event listener.");
+            }
+
+            // Event listener for Enter key on username input (if password is also filled)
+            if (ui.usernameInput) { 
+                ui.usernameInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && ui.passwordInput && ui.passwordInput.value.length === 8) { 
+                        handleLogin(ui.passwordInput.value, ui.usernameInput.value);
+                    }
+                });
+            } else {
+                console.error("Error: usernameInput not found in DOM for event listener.");
+            }
+
+            // Other event listeners (adding null checks for robustness)
+            if (ui.searchBtn) ui.searchBtn.addEventListener('click', handleSearch);
+            if (ui.searchInput) {
+                ui.searchInput.addEventListener('input', () => {
+                    const hasText = ui.searchInput.value.trim() !== '';
+                    const hasFile = uploadedFileContent !== null;
+                    if (ui.clearSearchBtn) ui.clearSearchBtn.classList.toggle('hidden', !hasText && !hasFile);
+                });
+            }
+            if (ui.clearSearchBtn) ui.clearSearchBtn.addEventListener('click', handleClearSearch);
+            if (ui.micBtn) ui.micBtn.addEventListener('click', handleVoiceSearch);
+            if (ui.uploadBtn) ui.uploadBtn.addEventListener('click', () => ui.fileUploadInput.click());
+            if (ui.fileUploadInput) ui.fileUploadInput.addEventListener('change', handleFileUpload);
+            if (ui.cameraBtn) ui.cameraBtn.addEventListener('click', openCamera);
+            if (ui.snapPhotoBtn) ui.snapPhotoBtn.addEventListener('click', snapPhoto);
+
+            if (ui.mockTestBtn) {
+                ui.mockTestBtn.addEventListener('click', () => {
+                    resetFullTestModal();
+                    if (ui.mockTestModal) ui.mockTestModal.style.display = 'block';
+                });
+            }
+            if (ui.subjectTestBtn) {
+                ui.subjectTestBtn.addEventListener('click', () => {
+                    if (ui.subjectTestModal) ui.subjectTestModal.style.display = 'block';
+                });
+            }
+            if (ui.subjectChoiceContainer) {
+                ui.subjectChoiceContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('subject-choice-btn')) {
+                        const subject = e.target.dataset.subject;
+                        if (ui.subjectTestModal) ui.subjectTestModal.style.display = 'none';
+                        startSubjectTest(subject);
+                    }
+                });
+            }
+            if (ui.historyBtn) ui.historyBtn.addEventListener('click', () => {
+                if (ui.historyModal) ui.historyModal.style.display = 'block';
+            });
+            if (ui.studyPlanBtn) ui.studyPlanBtn.addEventListener('click', () => {
+                if (ui.studyPlanModal) ui.studyPlanModal.style.display = 'block';
+            });
+            if (ui.generatePlanBtn) ui.generatePlanBtn.addEventListener('click', handleGenerateStudyPlan);
+            
+            if (ui.chapterTestBtn) ui.chapterTestBtn.addEventListener('click', () => {
+                if (ui.chapterTestModal) ui.chapterTestModal.style.display = 'block';
+            });
+            if (ui.chapterExpBtn) ui.chapterExpBtn.addEventListener('click', () => {
+                if (ui.chapterExplanationModal) ui.chapterExplanationModal.style.display = 'block';
+            });
+            if (ui.startChapterTestBtn) ui.startChapterTestBtn.addEventListener('click', startChapterTest);
+            if (ui.getExplanationBtn) ui.getExplanationBtn.addEventListener('click', handleChapterExplanation);
+
+            if (ui.closeMockTest) ui.closeMockTest.addEventListener('click', () => {
+                if (ui.mockTestModal) ui.mockTestModal.style.display = 'none';
+            });
+            if (ui.closeSubjectTest) ui.closeSubjectTest.addEventListener('click', () => {
+                if (ui.subjectTestModal) ui.subjectTestModal.style.display = 'none';
+            });
+            if (ui.closeHistory) ui.closeHistory.addEventListener('click', () => {
+                if (ui.historyModal) ui.historyModal.style.display = 'none';
+            });
+            if (ui.closeStudyPlan) ui.closeStudyPlan.addEventListener('click', () => {
+                if (ui.studyPlanModal) ui.studyPlanModal.style.display = 'none';
+            });
+            if (ui.closeChapterTest) ui.closeChapterTest.addEventListener('click', () => {
+                if (ui.chapterTestModal) ui.chapterTestModal.style.display = 'none';
+            });
+            if (ui.closeChapterExplanation) ui.closeChapterExplanation.addEventListener('click', () => {
+                if (ui.chapterExplanationModal) ui.chapterExplanationModal.style.display = 'none';
+            });
+            if (ui.closeCamera) ui.closeCamera.addEventListener('click', closeCamera);
+            if (ui.closeCalculator) ui.closeCalculator.addEventListener('click', () => {
+                if (ui.calculatorModal) ui.calculatorModal.style.display = 'none';
+            }); 
+
             window.addEventListener('click', (event) => {
-                const modals = [ui.mockTestModal, ui.historyModal, ui.subjectTestModal, ui.studyPlanModal, ui.chapterTestModal, ui.chapterExplanationModal, ui.cameraModal];
+                const modals = [ui.mockTestModal, ui.historyModal, ui.subjectTestModal, ui.studyPlanModal, ui.chapterTestModal, ui.chapterExplanationModal, ui.cameraModal, ui.calculatorModal];
                 modals.forEach(modal => {
-                    if (event.target == modal) {
+                    if (modal && event.target == modal) { 
                         if (modal === ui.cameraModal) closeCamera();
                         else modal.style.display = 'none';
                     }
                 });
             });
 
-            ui.chapterTestYear.addEventListener('change', () => populateFilters('chapter-test'));
-            ui.chapterTestSubject.addEventListener('change', () => populateFilters('chapter-test'));
-            ui.chapterExpYear.addEventListener('change', () => populateFilters('chapter-exp'));
-            ui.chapterExpSubject.addEventListener('change', () => populateFilters('chapter-exp'));
+            if (ui.chapterTestYear) ui.chapterTestYear.addEventListener('change', () => populateFilters('chapter-test'));
+            if (ui.chapterTestSubject) ui.chapterTestSubject.addEventListener('change', () => populateFilters('chapter-test'));
+            if (ui.chapterExpYear) ui.chapterExpYear.addEventListener('change', () => populateFilters('chapter-exp'));
+            if (ui.chapterExpSubject) ui.chapterExpSubject.addEventListener('change', () => populateFilters('chapter-exp'));
         }
+
+        // Global Firebase app instance
+        let firebaseApp; 
 
         // --- Core Application Logic ---
         function getPersonalizedGreeting() {
@@ -521,32 +637,93 @@
                 newIndex = Math.floor(Math.random() * specialGreetings.length);
             } while (newIndex === lastGreetingIndex);
             lastGreetingIndex = newIndex;
-            return specialGreetings[newIndex];
+            const greeting = specialGreetings[newIndex];
+            return {
+                main: greeting.main,
+                sub: greeting.sub
+            };
         }
 
-        async function handleLogin(password) {
-            if (password === '02102008') {
-                await initFirebase(); 
+        async function initializeDashboard() {
+            if (ui.lockScreen) { 
                 ui.lockScreen.style.opacity = 0;
                 setTimeout(() => ui.lockScreen.classList.add('hidden'), 500);
+            }
+            
+            const { main, sub } = getPersonalizedGreeting();
+            if (ui.welcomeGreet) ui.welcomeGreet.textContent = main; 
+            if (ui.welcomeSubtext) ui.welcomeSubtext.textContent = sub; 
+            if (ui.welcomeGreet) ui.welcomeGreet.classList.add('fade-in-down'); 
+            if (ui.welcomeSubtext) ui.welcomeSubtext.classList.add('fade-in-up'); 
+            if (ui.welcomeScreen) ui.welcomeScreen.classList.remove('hidden'); 
+
+            if (ui.dashboardUsername) ui.dashboardUsername.textContent = "Thanu"; 
+            if (ui.historyUsername) ui.historyUsername.textContent = "Thanu"; 
+
+            setTimeout(() => {
+                if (ui.welcomeScreen) ui.welcomeScreen.classList.add('hidden'); 
+                if (ui.mainDashboard) ui.mainDashboard.classList.remove('hidden'); 
+                populateFilters('chapter-test');
+                populateFilters('chapter-exp');
+            }, 4000);
+        }
+
+        async function handleLogin(password, inputUsername) {
+            if (ui.errorMessage) ui.errorMessage.textContent = ''; 
+            if (password === '02102008' && inputUsername.trim() !== '') {
+                username = inputUsername.trim(); 
                 
-                const { main, sub } = getPersonalizedGreeting();
-                ui.welcomeGreet.textContent = main;
-                ui.welcomeSubtext.textContent = sub;
-                ui.welcomeGreet.classList.add('fade-in-down');
-                ui.welcomeSubtext.classList.add('fade-in-up');
-                ui.welcomeScreen.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    ui.welcomeScreen.classList.add('hidden');
-                    ui.mainDashboard.classList.remove('hidden');
-                    populateFilters('chapter-test');
-                    populateFilters('chapter-exp');
-                }, 4000);
+                try {
+                    // Ensure auth is initialized before attempting sign-in
+                    if (!auth) {
+                        if (ui.errorMessage) { 
+                            ui.errorMessage.textContent = "Firebase not initialized. Please try again.";
+                            ui.errorMessage.classList.remove('hidden');
+                        }
+                        return;
+                    }
+                    // Sign in with hardcoded email and password
+                    const userCredential = await signInWithEmailAndPassword(auth, HARDCODED_EMAIL, HARDCODED_PASSWORD);
+                    userId = userCredential.user.uid;
+
+                    // Save the provided username to the profile of this hardcoded account
+                    const userProfileRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'details');
+                    await setDoc(userProfileRef, { username: username }, { merge: true });
+
+                    setupHistoryListeners(); // Setup listeners after successful auth
+                    initializeDashboard(); // Proceed to dashboard
+
+                } catch (error) {
+                    console.error("Firebase Login Error:", error);
+                    let userFriendlyMessage = "Failed to log in. Please check the hardcoded credentials or Firebase setup.";
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                            case 'auth/wrong-password':
+                                userFriendlyMessage = "Internal authentication failed. Please contact support.";
+                                break;
+                            case 'auth/operation-not-allowed':
+                                userFriendlyMessage = "Authentication method not enabled. Please enable Email/Password in Firebase Authentication settings.";
+                                break;
+                            case 'auth/invalid-credential': // Added specific handling for this error
+                                userFriendlyMessage = "Invalid login credentials. Please ensure the hardcoded email and password are correct and the user exists in Firebase Authentication.";
+                                break;
+                            default:
+                                userFriendlyMessage = `Authentication failed: ${error.message}`;
+                        }
+                    }
+                    if (ui.errorMessage) { 
+                        ui.errorMessage.textContent = userFriendlyMessage;
+                        ui.errorMessage.classList.remove('hidden');
+                    }
+                }
             } else {
-                ui.errorMessage.classList.remove('hidden');
-                ui.passwordInput.value = '';
-                setTimeout(() => ui.errorMessage.classList.add('hidden'), 2000);
+                if (ui.errorMessage) { 
+                    ui.errorMessage.classList.remove('hidden');
+                    ui.passwordInput.value = '';
+                    ui.errorMessage.textContent = 'Incorrect Passcode or Username required';
+                    setTimeout(() => ui.errorMessage.classList.add('hidden'), 2000);
+                }
             }
         }
 
@@ -567,16 +744,35 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                await signInAnonymously(auth);
-                userId = auth.currentUser?.uid;
-                if (!userId) throw new Error("Authentication failed, user ID is not available.");
-                
-                setupHistoryListeners();
+                // Check if user is already signed in (from previous session)
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        // Fetch username from profile (if it exists)
+                        const userProfileRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'details');
+                        const userDoc = await getDoc(userProfileRef);
+                        if (userDoc.exists() && userDoc.data().username) {
+                            username = userDoc.data().username; 
+                        } else {
+                            // If no username found for this persistent user, set a default or prompt
+                            username = "Thanu"; 
+                            await setDoc(userProfileRef, { username: username }, { merge: true });
+                        }
+                        setupHistoryListeners();
+                        initializeDashboard();
+                    } else {
+                        // No user signed in, show lock screen
+                        if (ui.lockScreen) { 
+                            ui.lockScreen.classList.remove('hidden');
+                            ui.lockScreen.style.opacity = 1;
+                        }
+                    }
+                });
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
                 let userErrorMessage = "Could not connect to the database. Please check your Firebase configuration and refresh.";
-                ui.mainDashboard.innerHTML = `<div class="p-8"><p class="text-red-500 text-center">${userErrorMessage}</p></div>`;
+                if (ui.mainDashboard) ui.mainDashboard.innerHTML = `<div class="p-8"><p class="text-red-500 text-center">${userErrorMessage}</p></div>`;
             }
         }
 
@@ -645,15 +841,15 @@
         // --- Feature Handlers ---
         function clearFile() {
             uploadedFileContent = null;
-            ui.fileDisplayArea.innerHTML = '';
-            ui.fileUploadInput.value = ''; // Reset file input
-            ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value.trim() === '');
+            if (ui.fileDisplayArea) ui.fileDisplayArea.innerHTML = ''; 
+            if (ui.fileUploadInput) ui.fileUploadInput.value = ''; 
+            if (ui.clearSearchBtn && ui.searchInput) ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value.trim() === ''); 
         }
 
         function handleClearSearch() {
-            ui.searchInput.value = '';
-            ui.geminiResponseEl.innerHTML = '';
-            ui.resultsSection.classList.add('hidden');
+            if (ui.searchInput) ui.searchInput.value = ''; 
+            if (ui.geminiResponseEl) ui.geminiResponseEl.innerHTML = ''; 
+            if (ui.resultsSection) ui.resultsSection.classList.add('hidden'); 
             clearFile();
         }
 
@@ -665,16 +861,16 @@
             }
             const recognition = new SpeechRecognition();
             recognition.lang = 'en-US';
-            ui.micBtn.classList.add('mic-listening');
+            if (ui.micBtn) ui.micBtn.classList.add('mic-listening');
             const recognitionTimeout = setTimeout(() => recognition.stop(), 6000);
             recognition.onresult = (event) => {
-                ui.searchInput.value = event.results[0][0].transcript;
-                ui.clearSearchBtn.classList.remove('hidden');
+                if (ui.searchInput) ui.searchInput.value = event.results[0][0].transcript; 
+                if (ui.clearSearchBtn) ui.clearSearchBtn.classList.remove('hidden'); 
                 handleSearch();
             };
             recognition.onend = () => {
                 clearTimeout(recognitionTimeout);
-                ui.micBtn.classList.remove('mic-listening');
+                if (ui.micBtn) ui.micBtn.classList.remove('mic-listening'); 
             };
             recognition.onerror = (event) => console.error(`Recognition error: ${event.error}`);
             recognition.start();
@@ -700,12 +896,12 @@
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 try {
                     cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    ui.cameraFeed.srcObject = cameraStream;
-                    ui.cameraModal.style.display = 'block';
+                    if (ui.cameraFeed) ui.cameraFeed.srcObject = cameraStream; 
+                    if (ui.cameraModal) ui.cameraModal.style.display = 'block'; 
                 } catch (err) {
                     console.error("Error accessing camera: ", err);
-                    ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: Could not access the camera. Please check permissions.</p>`;
-                    ui.resultsSection.classList.remove('hidden');
+                    if (ui.geminiResponseEl) ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: Could not access the camera. Please check permissions.</p>`; 
+                    if (ui.resultsSection) ui.resultsSection.classList.remove('hidden'); 
                 }
             }
         }
@@ -714,12 +910,16 @@
             if (cameraStream) {
                 cameraStream.getTracks().forEach(track => track.stop());
             }
-            ui.cameraModal.style.display = 'none';
+            if (ui.cameraModal) ui.cameraModal.style.display = 'none'; 
         }
 
         function snapPhoto() {
             const canvas = ui.cameraCanvas;
             const video = ui.cameraFeed;
+            if (!canvas || !video) { 
+                console.error("Camera canvas or video element not found.");
+                return;
+            }
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
@@ -737,22 +937,26 @@
         }
 
         function displayUploadedFile() {
-            ui.fileDisplayArea.innerHTML = `
-                <span class="bg-gray-600 text-sm py-1 px-3 rounded-full inline-flex items-center gap-2">
-                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" /></svg>
-                    <span>${uploadedFileContent.name}</span>
-                </span>`;
-            ui.clearSearchBtn.classList.remove('hidden');
+            if (ui.fileDisplayArea) { 
+                ui.fileDisplayArea.innerHTML = `
+                    <span class="bg-gray-600 text-sm py-1 px-3 rounded-full inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" /></svg>
+                        <span>${uploadedFileContent.name}</span>
+                    </span>`;
+            }
+            if (ui.clearSearchBtn && ui.searchInput) ui.clearSearchBtn.classList.toggle('hidden', ui.searchInput.value.trim() === ''); 
         }
 
         async function handleSearch() {
             const query = ui.searchInput.value.trim();
             if ((!query && !uploadedFileContent) || !userId) return;
             
-            ui.searchBtn.disabled = true;
-            ui.searchBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
-            ui.resultsSection.classList.remove('hidden');
-            ui.geminiResponseEl.innerHTML = '<p>Analyzing with AI...</p>';
+            if (ui.searchBtn) { 
+                ui.searchBtn.disabled = true;
+                ui.searchBtn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
+            }
+            if (ui.resultsSection) ui.resultsSection.classList.remove('hidden'); 
+            if (ui.geminiResponseEl) ui.geminiResponseEl.innerHTML = '<p>Analyzing with AI...</p>'; 
 
             let payload;
             let useJsonResponse = false;
@@ -800,26 +1004,45 @@
                 await addDoc(collection(db, `artifacts/${appId}/users/${userId}/searchHistory`), historyData);
 
             } catch (error) {
-                 ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                 if (ui.geminiResponseEl) ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
             } finally {
-                ui.searchBtn.disabled = false;
-                ui.searchBtn.innerHTML = 'Search';
+                if (ui.searchBtn) { 
+                    ui.searchBtn.disabled = false;
+                    ui.searchBtn.innerHTML = 'Search';
+                }
             }
         }
         
         async function handleGenerateStudyPlan() {
             const weeks = ui.studyWeeks.value;
             const subjects = ui.studySubjects.value;
-            ui.studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
+            if (ui.studyPlanOutput) ui.studyPlanOutput.innerHTML = 'Generating your personalized study plan...';
             const prompt = `Create a detailed, day-by-day study plan for a student for ${weeks} weeks, focusing on: ${subjects || 'all subjects'}. Format it clearly.`;
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
             try {
                 const result = await fetchApiResponse(apiUrl, payload, { timeout: 90000 });
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                ui.studyPlanOutput.innerHTML = text.replace(/\*/g, '');
+                let formattedText = text;
+                try {
+                    const parsedPlan = JSON.parse(text);
+                    if (Array.isArray(parsedPlan)) {
+                        formattedText = parsedPlan.map(weekPlan => {
+                            let weekHtml = `<strong>Week ${weekPlan.week}:</strong><br>`;
+                            for (const day in weekPlan.days) {
+                                weekHtml += `&nbsp;&nbsp;<em>${day}:</em> ${weekPlan.days[day]}<br>`;
+                            }
+                            return weekHtml;
+                        }).join('<br>');
+                    } else if (typeof parsedPlan === 'object' && parsedPlan.plan) {
+                        formattedText = parsedPlan.plan.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    }
+                } catch (e) {
+                    formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                }
+                if (ui.studyPlanOutput) ui.studyPlanOutput.innerHTML = formattedText;
             } catch (error) {
-                ui.studyPlanOutput.innerHTML = `<p class="text-red-400">Error generating plan: ${error.message}</p>`;
+                if (ui.studyPlanOutput) ui.studyPlanOutput.innerHTML = `<p class="text-red-400">Error generating plan: ${error.message}</p>`;
             }
         }
         
@@ -829,9 +1052,9 @@
             const chapter = ui.chapterExpChapter.value;
             const topic = ui.chapterExpTopic.value.trim();
             const query = topic ? `${topic} from the chapter ${chapter}` : `the chapter ${chapter}`;
-            ui.chapterExplanationModal.style.display = 'none';
-            ui.resultsSection.classList.remove('hidden');
-            ui.geminiResponseEl.innerHTML = `<p>Loading explanation for ${query}...</p>`;
+            if (ui.chapterExplanationModal) ui.chapterExplanationModal.style.display = 'none';
+            if (ui.resultsSection) ui.resultsSection.classList.remove('hidden');
+            if (ui.geminiResponseEl) ui.geminiResponseEl.innerHTML = `<p>Loading explanation for ${query}...</p>`;
             const prompt = `Provide a detailed explanation for the NEET topic: "${query}". If the concept is visual, include a simplified SVG diagram string in the JSON response. The JSON object must have keys: "topic", "explanation", and "svgDiagram" (string, or null).`;
             const payload = { 
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -842,11 +1065,11 @@
                 const result = await fetchApiResponse(apiUrl, payload);
                 const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!jsonText) throw new Error("Received an empty response from the AI.");
-                renderExplanationWithDiagram(ui.geminiResponseEl, jsonText, query);
+                if (ui.geminiResponseEl) renderExplanationWithDiagram(ui.geminiResponseEl, jsonText, query);
                 const historyData = { type: 'explanation', query, response: jsonText, timestamp: Date.now() };
                 await addDoc(collection(db, `artifacts/${appId}/users/${userId}/explanationHistory`), historyData);
             } catch (error) {
-                 ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                if (ui.geminiResponseEl) ui.geminiResponseEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
             }
         }
 
@@ -854,7 +1077,7 @@
         async function startFullTest() {
             currentTestType = 'Full Mock Test';
             const paper = prepareTestUI();
-            paper.innerHTML = '<p>Generating unique full test... This will take a moment.</p>';
+            if (paper) paper.innerHTML = '<p>Generating unique full test... This will take a moment.</p>';
             try {
                 const subjects = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
                 const questionPromises = subjects.map(subject => generateQuestionsForSubject(subject, 45, paper));
@@ -869,9 +1092,9 @@
 
         async function startSubjectTest(subject) {
             currentTestType = `Subject Test: ${subject}`;
-            ui.mockTestModal.style.display = 'block';
+            if (ui.mockTestModal) ui.mockTestModal.style.display = 'block';
             const paper = prepareTestUI(true);
-            paper.innerHTML = `<p>Generating unique ${subject} test...</p>`;
+            if (paper) paper.innerHTML = `<p>Generating unique ${subject} test...</p>`;
             try {
                 currentTestQuestions = await generateQuestionsForSubject(subject, 45, paper);
                 displayQuestions(currentTestQuestions);
@@ -886,10 +1109,10 @@
             const subject = ui.chapterTestSubject.value;
             const chapter = ui.chapterTestChapter.value;
             currentTestType = `Chapter Test: ${chapter}`;
-            ui.chapterTestModal.style.display = 'none';
-            ui.mockTestModal.style.display = 'block';
+            if (ui.chapterTestModal) ui.chapterTestModal.style.display = 'none';
+            if (ui.mockTestModal) ui.mockTestModal.style.display = 'block';
             const paper = prepareTestUI(true);
-            paper.innerHTML = `<p>Generating test for ${chapter}...</p>`;
+            if (paper) paper.innerHTML = `<p>Generating test for ${chapter}...</p>`;
             try {
                 currentTestQuestions = await generateQuestionsForSubject(subject, 20, paper, chapter);
                 displayQuestions(currentTestQuestions);
@@ -958,7 +1181,7 @@
                  element.innerHTML = finalHtml;
             } else {
                 const rawText = (typeof data === 'object') ? JSON.stringify(data, null, 2) : String(data);
-                element.innerHTML = `<h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2><pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${rawText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
+                element.innerHTML = `<h2 class="text-2xl font-bold text-cyan-400 mb-4">Explanation for ${query}</h2><p class="text-sm text-yellow-400 mb-4">(AI response was not structured, showing raw text.)</p><pre class="bg-gray-900 p-4 rounded-lg text-gray-300 whitespace-pre-wrap">${rawText.replace(/\*/g, '').replace(/\\n/g, '\n')}</pre>`;
             }
         }
 
@@ -973,39 +1196,56 @@
         }
 
         function resetFullTestModal() {
-            ui.mockTestContent.innerHTML = `<div id="mock-test-instructions"><h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2><ul class="list-disc list-inside text-gray-300 space-y-2"><li>180 MCQs.</li><li>+4 for correct, -1 for incorrect.</li><li>Duration: <strong>3 hours</strong>.</li></ul><button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button></div><div id="mock-test-paper" class="hidden mt-6"></div>`;
-            document.getElementById('start-full-test-btn').addEventListener('click', startFullTest);
+            if (ui.mockTestContent) { 
+                ui.mockTestContent.innerHTML = `<div id="mock-test-instructions"><h2 class="text-2xl font-bold mb-4">NEET Full Mock Test</h2><ul class="list-disc list-inside text-gray-300 space-y-2"><li>180 MCQs.</li><li>+4 for correct, -1 for incorrect.</li><li>Duration: <strong>3 hours</strong>.</li></ul><button id="start-full-test-btn" class="mt-6 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Start Full Test</button></div><div id="mock-test-paper" class="hidden mt-6"></div>`;
+                const startFullTestBtn = document.getElementById('start-full-test-btn');
+                if (startFullTestBtn) startFullTestBtn.addEventListener('click', startFullTest); 
+            }
         }
 
         function prepareTestUI(isSubjectTest = false) {
+            if (!ui.mockTestContent) return null; 
             if (isSubjectTest) {
                 ui.mockTestContent.innerHTML = '<div id="mock-test-paper"></div>';
             } else {
-                ui.mockTestContent.querySelector('#mock-test-instructions')?.classList.add('hidden');
+                const instructions = ui.mockTestContent.querySelector('#mock-test-instructions');
+                if (instructions) instructions.classList.add('hidden'); 
             }
             const paper = ui.mockTestContent.querySelector('#mock-test-paper');
-            paper.classList.remove('hidden');
+            if (paper) paper.classList.remove('hidden'); 
             return paper;
         }
 
         function handleTestGenerationError(paperElement, error) {
-            paperElement.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`;
+            if (paperElement) paperElement.innerHTML = `<p class="text-red-400">Failed to generate the test: ${error.message}. Please try again.</p>`; 
         }
 
         function displayQuestions(questions) {
-            const paper = ui.mockTestContent.querySelector('#mock-test-paper');
-            let questionsHtml = `<div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${currentTestType}</h2><div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div></div>`;
+            const paper = ui.mockTestContent && ui.mockTestContent.querySelector('#mock-test-paper'); 
+            if (!paper) return; 
+
+            let questionsHtml = `<div class="sticky top-0 tlearn-bg py-2 z-10 flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${currentTestType}</h2><button id="calculator-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full text-sm">Calculator</button><div id="timer-display" class="text-2xl font-bold tlearn-red-text font-mono"></div></div>`;
             questions.forEach((q, index) => {
                 questionsHtml += `<div class="mb-6"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2" id="q-${index}">${q.options.map((opt, i) => `<div><input type="radio" id="q${index}opt${i}" name="q${index}" value="${String.fromCharCode(65 + i)}"><label for="q${index}opt${i}" class="ml-2">${String.fromCharCode(65 + i)}) ${opt}</label></div>`).join('')}</div></div>`;
             });
             questionsHtml += `<button id="submit-test-btn" class="mt-8 w-full tlearn-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md">Submit Test</button>`;
             paper.innerHTML = questionsHtml;
-            document.getElementById('submit-test-btn').addEventListener('click', handleSubmitTest);
+            const submitTestBtn = document.getElementById('submit-test-btn');
+            if (submitTestBtn) submitTestBtn.addEventListener('click', handleSubmitTest); 
+
+            // Add event listener for the calculator button after it's rendered
+            const calculatorButton = document.getElementById('calculator-btn');
+            if (calculatorButton) {
+                calculatorButton.addEventListener('click', () => {
+                    if (ui.calculatorModal) ui.calculatorModal.style.display = 'block';
+                });
+            }
+            setupCalculator(); // Initialize calculator logic
         }
 
         async function handleAllExplanations(result) {
             const explanationsContainer = document.getElementById('explanations-container');
-            explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for all questions...</p>`;
+            if (explanationsContainer) explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for all questions...</p>`; 
             const prompt = `For the following MCQs, explain why the correct answer is right. Format as a JSON array of objects, each with "question" and "explanation" keys. Questions: ${JSON.stringify(result.questions)}`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
@@ -1023,15 +1263,16 @@
                         questionContainer.appendChild(explanationDiv);
                     }
                 });
-                document.getElementById('explanation-buttons').style.display = 'none';
+                const explanationButtons = document.getElementById('explanation-buttons');
+                if (explanationButtons) explanationButtons.style.display = 'none'; 
             } catch (error) {
-                explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
+                if (explanationsContainer) explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`; 
             }
         }
 
         async function handleMistakeExplanations(result) {
             const explanationsContainer = document.getElementById('explanations-container');
-            explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for your mistakes...</p>`;
+            if (explanationsContainer) explanationsContainer.innerHTML = `<p class="text-center text-yellow-400">Generating explanations for your mistakes...</p>`; 
             const incorrectQuestions = result.questions.filter((q, i) => result.userAnswers[i] && result.userAnswers[i] !== q.answer);
             const prompt = `For my mistakes in the following MCQs, explain why my answer was wrong and the correct one is right. Format as a JSON array of objects with "question" and "explanation" keys. Mistakes: ${JSON.stringify(incorrectQuestions)}`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
@@ -1052,9 +1293,10 @@
                         }
                     }
                 });
-                document.getElementById('explanation-buttons').style.display = 'none';
+                const explanationButtons = document.getElementById('explanation-buttons');
+                if (explanationButtons) explanationButtons.style.display = 'none'; 
             } catch (error) {
-                explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`;
+                if (explanationsContainer) explanationsContainer.innerHTML = `<p class="text-red-400">Error generating explanations: ${error.message}</p>`; 
             }
         }
 
@@ -1076,10 +1318,12 @@
                 }).join('');
                 resultsHtml += `<div id="question-review-${index}" class="mb-6 p-4 bg-gray-800 rounded-lg"><p class="font-semibold">${index + 1}. ${q.question}</p><div class="mt-2 space-y-2">${optionsHtml}</div></div>`;
             });
-            ui.mockTestContent.innerHTML = resultsHtml;
-            document.getElementById('explain-all-btn').addEventListener('click', () => handleAllExplanations({ ...result, questions, userAnswers }));
+            if (ui.mockTestContent) ui.mockTestContent.innerHTML = resultsHtml;
+            const explainAllBtn = document.getElementById('explain-all-btn');
+            if (explainAllBtn) explainAllBtn.addEventListener('click', () => handleAllExplanations({ ...result, questions, userAnswers }));
             if (result.incorrectCount > 0) {
-                document.getElementById('explain-mistakes-btn').addEventListener('click', () => handleMistakeExplanations({ ...result, questions, userAnswers }));
+                const explainMistakesBtn = document.getElementById('explain-mistakes-btn');
+                if (explainMistakesBtn) explainMistakesBtn.addEventListener('click', () => handleMistakeExplanations({ ...result, questions, userAnswers }));
             }
         }
         
@@ -1129,10 +1373,11 @@
         }
 
         function renderHistory() {
-            ui.historyContent.innerHTML = '';
+            if (ui.historyContent) ui.historyContent.innerHTML = '';
+            if (ui.historyUsername) ui.historyUsername.textContent = "Thanu"; 
             if (!combinedHistory || combinedHistory.length === 0) {
-                 ui.historyContent.innerHTML = '<p class="text-gray-400">No history yet. Take a test or search for a concept to get started!</p>';
-                 return;
+                if (ui.historyContent) ui.historyContent.innerHTML = '<p class="text-gray-400">No history yet. Take a test or search for a concept to get started!</p>';
+                return;
             }
             const groupedByDate = combinedHistory.reduce((acc, result) => {
                 const date = new Date(result.timestamp).toLocaleDateString('en-CA'); 
@@ -1149,7 +1394,7 @@
                 if (dateStr === today) dateHeading.textContent = 'Today';
                 else if (dateStr === yesterday.toLocaleDateString('en-CA')) dateHeading.textContent = 'Yesterday';
                 else dateHeading.textContent = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                ui.historyContent.appendChild(dateHeading);
+                if (ui.historyContent) ui.historyContent.appendChild(dateHeading);
                 groupedByDate[dateStr].forEach(item => {
                     const record = document.createElement('div');
                     record.className = 'p-4 bg-gray-700 rounded-md mb-3 flex justify-between items-center';
@@ -1160,23 +1405,28 @@
                         itemHtml = `<div><p class="font-bold">${item.type === 'search' ? 'Searched' : 'Explained'}:</p><p>${item.query}</p></div>`;
                     }
                     record.innerHTML = `${itemHtml}<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">View</button>`;
-                    record.querySelector('button').addEventListener('click', () => {
-                        ui.historyModal.style.display = 'none';
-                        if (item.type === 'test') {
-                            ui.mockTestModal.style.display = 'block';
-                            displayResults(item);
-                        } else {
-                            ui.resultsSection.classList.remove('hidden');
-                            const responseData = safeJsonParse(item.response);
-                            if (responseData && typeof responseData === 'object') {
-                                if (item.type === 'explanation') renderExplanationWithDiagram(ui.geminiResponseEl, item.response, item.query);
-                                else renderStructuredResponse(ui.geminiResponseEl, responseData, item.query);
+                    const viewButton = record.querySelector('button');
+                    if (viewButton) { 
+                        viewButton.addEventListener('click', () => {
+                            if (ui.historyModal) ui.historyModal.style.display = 'none';
+                            if (item.type === 'test') {
+                                if (ui.mockTestModal) ui.mockTestModal.style.display = 'block';
+                                displayResults(item);
                             } else {
-                                renderStructuredResponse(ui.geminiResponseEl, { detailedAnswer: item.response }, item.query);
+                                if (ui.resultsSection) ui.resultsSection.classList.remove('hidden');
+                                const responseData = safeJsonParse(item.response);
+                                if (responseData && typeof responseData === 'object') {
+                                    if (ui.geminiResponseEl) { 
+                                        if (item.type === 'explanation') renderExplanationWithDiagram(ui.geminiResponseEl, item.response, item.query);
+                                        else renderStructuredResponse(ui.geminiResponseEl, responseData, item.query);
+                                    }
+                                } else {
+                                    if (ui.geminiResponseEl) renderStructuredResponse(ui.geminiResponseEl, { detailedAnswer: item.response }, item.query);
+                                }
                             }
-                        }
-                    });
-                    ui.historyContent.appendChild(record);
+                        });
+                    }
+                    if (ui.historyContent) ui.historyContent.appendChild(record);
                 });
             });
         }
@@ -1196,21 +1446,206 @@
             timerInterval = setInterval(() => {
                 const distance = endTime - Date.now();
                 const timerDisplay = document.getElementById('timer-display');
-                if (distance < 0) {
-                    clearInterval(timerInterval);
-                    if (timerDisplay) timerDisplay.innerHTML = "Time's Up!";
-                    document.getElementById('submit-test-btn')?.click();
-                    return;
+                if (timerDisplay) { 
+                    if (distance < 0) {
+                        clearInterval(timerInterval);
+                        timerDisplay.innerHTML = "Time's Up!";
+                        const submitTestBtn = document.getElementById('submit-test-btn');
+                        if (submitTestBtn) submitTestBtn.click();
+                        return;
+                    }
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    timerDisplay.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                if (timerDisplay) timerDisplay.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }, 1000);
         }
 
+        // --- Calculator Logic ---
+        function setupCalculator() {
+            const display = ui.calculatorDisplay;
+            if (!display) { 
+                console.error("Calculator display not found.");
+                return;
+            }
+            let currentInput = '0';
+            let operator = null;
+            let prevInput = '0';
+            let resetDisplay = false;
+
+            function updateDisplay() {
+                display.value = currentInput;
+            }
+
+            function clear() {
+                currentInput = '0';
+                operator = null;
+                prevInput = '0';
+                resetDisplay = false;
+                updateDisplay();
+            }
+
+            function backspace() {
+                currentInput = currentInput.slice(0, -1);
+                if (currentInput === '') currentInput = '0';
+                updateDisplay();
+            }
+
+            function appendNumber(number) {
+                if (resetDisplay) {
+                    currentInput = number;
+                    resetDisplay = false;
+                } else {
+                    if (currentInput === '0' && number !== '.') {
+                        currentInput = number;
+                    } else {
+                        currentInput += number;
+                    }
+                }
+                updateDisplay();
+            }
+
+            function chooseOperator(nextOperator) {
+                if (currentInput === '0' && nextOperator === '-') { 
+                    currentInput = '-';
+                    updateDisplay();
+                    return;
+                }
+                if (operator && !resetDisplay) {
+                    calculate();
+                }
+                operator = nextOperator;
+                prevInput = currentInput;
+                resetDisplay = true;
+            }
+
+            function calculate() {
+                let result;
+                const prev = parseFloat(prevInput);
+                const current = parseFloat(currentInput);
+
+                if (isNaN(prev) || isNaN(current)) {
+                    currentInput = 'Error';
+                    updateDisplay();
+                    return;
+                }
+
+                switch (operator) {
+                    case '+': result = prev + current; break;
+                    case '-': result = prev - current; break;
+                    case '*': result = prev * current; break;
+                    case '/': 
+                        if (current === 0) {
+                            currentInput = 'Error'; 
+                            updateDisplay();
+                            return;
+                        }
+                        result = prev / current; 
+                        break;
+                    default: return;
+                }
+                currentInput = result.toString();
+                operator = null;
+                resetDisplay = true;
+                updateDisplay();
+            }
+
+            // Attach event listeners to all calculator buttons
+            document.querySelectorAll('.calc-btn').forEach(button => {
+                if (button) { 
+                    button.addEventListener('click', () => {
+                        const value = button.dataset.value;
+                        if (value >= '0' && value <= '9' || value === '.') {
+                            appendNumber(value);
+                        } else if (value === 'C') {
+                            clear();
+                        } else if (value === '&larr;') { 
+                            backspace();
+                        } else if (value === '=') {
+                            calculate();
+                        } else { 
+                            chooseOperator(value);
+                        }
+                    });
+                }
+            });
+
+            // Initialize display when calculator is setup
+            updateDisplay();
+        }
+
         // --- Initializer ---
-        setupEventListeners();
+        // Ensure the DOM is fully loaded before setting up event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate ui object properties here, after DOM is ready
+            ui.usernameInput = document.getElementById('username-input');
+            ui.passwordInput = document.getElementById('password-input');
+            ui.unlockBtn = document.getElementById('unlock-btn'); 
+            ui.lockScreen = document.getElementById('lock-screen');
+            ui.welcomeScreen = document.getElementById('welcome-screen');
+            ui.mainDashboard = document.getElementById('main-dashboard');
+            ui.errorMessage = document.getElementById('error-message');
+            ui.welcomeGreet = document.getElementById('welcome-greet');
+            ui.welcomeSubtext = document.getElementById('welcome-subtext');
+            ui.dashboardUsername = document.getElementById('dashboard-username'); 
+            ui.historyUsername = document.getElementById('history-username'); 
+            ui.searchBtn = document.getElementById('search-btn');
+            ui.searchInput = document.getElementById('search-input');
+            ui.clearSearchBtn = document.getElementById('clear-search-btn');
+            ui.micBtn = document.getElementById('mic-btn');
+            ui.uploadBtn = document.getElementById('upload-btn');
+            ui.cameraBtn = document.getElementById('camera-btn');
+            ui.fileUploadInput = document.getElementById('file-upload-input');
+            ui.fileDisplayArea = document.getElementById('file-display-area');
+            ui.resultsSection = document.getElementById('results-section');
+            ui.geminiResponseEl = document.getElementById('gemini-response');
+            ui.mockTestBtn = document.getElementById('mock-test-btn');
+            ui.subjectTestBtn = document.getElementById('subject-test-btn');
+            ui.historyBtn = document.getElementById('icon-history-btn');
+            ui.studyPlanBtn = document.getElementById('study-plan-btn');
+            ui.chapterTestBtn = document.getElementById('chapter-test-btn');
+            ui.chapterExpBtn = document.getElementById('chapter-exp-btn');
+            ui.mockTestModal = document.getElementById('mock-test-modal');
+            ui.subjectTestModal = document.getElementById('subject-test-modal');
+            ui.historyModal = document.getElementById('history-modal');
+            ui.studyPlanModal = document.getElementById('study-plan-modal');
+            ui.chapterTestModal = document.getElementById('chapter-test-modal');
+            ui.chapterExplanationModal = document.getElementById('chapter-explanation-modal');
+            ui.cameraModal = document.getElementById('camera-modal');
+            ui.calculatorModal = document.getElementById('calculator-modal'); 
+            ui.closeMockTest = document.getElementById('close-mock-test');
+            ui.closeSubjectTest = document.getElementById('close-subject-test');
+            ui.closeHistory = document.getElementById('close-history');
+            ui.closeStudyPlan = document.getElementById('close-study-plan');
+            ui.closeChapterTest = document.getElementById('close-chapter-test');
+            ui.closeChapterExplanation = document.getElementById('close-chapter-explanation');
+            ui.closeCamera = document.getElementById('close-camera');
+            ui.closeCalculator = document.getElementById('close-calculator'); 
+            ui.mockTestContent = document.getElementById('mock-test-content');
+            ui.subjectChoiceContainer = document.getElementById('subject-choice-container');
+            ui.historyContent = document.getElementById('history-content');
+            ui.generatePlanBtn = document.getElementById('generate-plan-btn');
+            ui.studyPlanOutput = document.getElementById('study-plan-output');
+            ui.studyWeeks = document.getElementById('study-weeks');
+            ui.studySubjects = document.getElementById('study-subjects');
+            ui.chapterTestYear = document.getElementById('chapter-test-year');
+            ui.chapterTestSubject = document.getElementById('chapter-test-subject');
+            ui.chapterTestChapter = document.getElementById('chapter-test-chapter');
+            ui.startChapterTestBtn = document.getElementById('start-chapter-test-btn');
+            ui.chapterExpYear = document.getElementById('chapter-exp-year');
+            ui.chapterExpSubject = document.getElementById('chapter-exp-subject');
+            ui.chapterExpChapter = document.getElementById('chapter-exp-chapter');
+            ui.chapterExpTopic = document.getElementById('chapter-exp-topic');
+            ui.getExplanationBtn = document.getElementById('get-explanation-btn');
+            ui.cameraFeed = document.getElementById('camera-feed');
+            ui.cameraCanvas = document.getElementById('camera-canvas');
+            ui.snapPhotoBtn = document.getElementById('snap-photo-btn');
+            ui.calculatorDisplay = document.getElementById('calculator-display'); 
+
+            setupEventListeners(); // Call setupEventListeners after ui is populated
+            initFirebase(); // Initialize Firebase and check auth state on load
+        });
 
     </script>
 </body>
